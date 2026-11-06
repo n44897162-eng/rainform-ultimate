@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#050a12">
+<meta name="description" content="把逐时降雨数据变成一场可以旋转、可以编辑、可以聆听的实时粒子雨。">
+<title>如果降雨数据变成雨 · Rainfall as Rain</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+  <canvas id="scene"></canvas>
+  <div class="atmosphere"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="eyebrow"><span class="dot"></span> VIBE CODING <span class="sep">/</span> DATA AS WEATHER</div>
+      <h1 data-zh="如果降雨数据变成雨" data-en="When Rainfall Data Becomes Rain">如果降雨数据变成雨</h1>
+      <p class="sub" data-zh="把 00:00 — 24:00 的 25 个逐时降雨数据点，变成一场可以感受的雨" data-en="25 hourly rainfall values, 00:00 to 24:00, turned into rain you can feel">把 00:00 — 24:00 的 25 个逐时降雨数据点，变成一场可以感受的雨</p>
+    </div>
+
+    <div class="readout glass">
+      <div class="readout-top">
+        <span class="label" data-zh="当前时刻 / TIME" data-en="CURRENT TIME">当前时刻 / TIME</span>
+        <span class="mono clock" id="timeValue">18:00</span>
+      </div>
+      <div class="intensity-line">
+        <span class="mono huge" id="intensity">12.6</span>
+        <span class="unit" data-zh="毫米/小时" data-en="mm / hour">毫米/小时</span>
+      </div>
+      <div class="bar"><i id="levelFill"></i></div>
+      <div class="readout-meta">
+        <span id="levelText" class="level">大雨</span>
+        <span class="mono" id="particleCount">0 DROPS</span>
+        <span class="mono" id="fps">60 FPS</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="axis-legend glass">
+    <div class="legend-title" data-zh="坐标 · AXES" data-en="AXES">坐标 · AXES</div>
+    <div><span class="swatch x"></span><span data-zh="X 时间 00:00—24:00" data-en="X time 00:00—24:00">X 时间 00:00—24:00</span></div>
+    <div><span class="swatch y"></span><span data-zh="Y 降雨强度 mm/h" data-en="Y intensity mm/h">Y 降雨强度 mm/h</span></div>
+    <div><span class="swatch z"></span><span data-zh="Z 雨幕深度" data-en="Z rain depth">Z rain depth</span></div>
+  </div>
+
+  <aside class="controls glass">
+    <div class="ctrl-title" data-zh="视角控制 · VIEW" data-en="VIEW CONTROL">视角控制 · VIEW</div>
+    <button class="btn primary" id="rotateBtn"><span class="icon">&#10227;</span><span data-zh="旋转 30°" data-en="Rotate 30°">旋转 30°</span></button>
+    <div class="btn-row">
+      <button class="btn" id="rotateBack">&#10226; &minus;30&deg;</button>
+      <button class="btn" id="resetView" data-zh="重置" data-en="Reset">重置</button>
+    </div>
+    <div class="angle-box">
+      <div><span data-zh="方位角" data-en="Azimuth">方位角</span><strong class="mono" id="yawValue">30&deg;</strong></div>
+      <div><span data-zh="俯仰角" data-en="Elevation">俯仰角</span><strong class="mono" id="pitchValue">30&deg;</strong></div>
+    </div>
+    <div class="divider"></div>
+    <label class="switch"><input type="checkbox" id="autoRotate"><span class="track"></span><span data-zh="自动旋转" data-en="Auto rotate">自动旋转</span></label>
+    <label class="switch"><input type="checkbox" id="soundToggle"><span class="track"></span><span data-zh="雨声" data-en="Rain sound">雨声</span></label>
+    <button class="lang" id="langBtn">EN</button>
+  </aside>
+
+  <footer class="bottom">
+    <div class="curve-panel glass">
+      <div class="curve-head">
+        <div class="curve-title" data-zh="降雨曲线 · 拖动数据点，改写这场雨" data-en="Rainfall curve · drag the dots to reshape the rain">降雨曲线 · 拖动数据点，改写这场雨</div>
+        <div class="transport">
+          <button class="btn sm" id="playBtn"><span id="playIcon">&#10074;&#10074;</span> <span id="playLabel" data-zh="暂停" data-en="Pause">暂停</span></button>
+          <button class="btn sm mono" id="speedBtn">1&times;</button>
+          <button class="btn sm" id="resetData" data-zh="还原数据" data-en="Reset data">还原数据</button>
+        </div>
+      </div>
+      <canvas id="curve"></canvas>
+    </div>
+    <div class="tips">
+      <span data-zh="拖拽画面旋转视角" data-en="Drag to rotate">拖拽画面旋转视角</span><b>&middot;</b>
+      <span data-zh="滚轮缩放" data-en="Scroll to zoom">滚轮缩放</span><b>&middot;</b>
+      <span data-zh="双击重置视角" data-en="Double-click to reset">双击重置视角</span><b>&middot;</b>
+      <span data-zh="← → 每次 30°" data-en="Left / Right arrow: 30°">← → 每次 30°</span>
+    </div>
+    <div class="credit" data-zh="灵感来自 afterimage-lab《Rainform / 数据成雨》 · 本页面为独立实现的致敬作品 · 降雨数据为演示用示例数据" data-en="Inspired by afterimage-lab's Rainform · An independent tribute implementation · Demo rainfall data">灵感来自 afterimage-lab《Rainform / 数据成雨》 · 本页面为独立实现的致敬作品 · 降雨数据为演示用示例数据</div>
+  </footer>
+
+  <div id="portraitGate">
+    <div class="gate-icon">&#10227;</div>
+    <div data-zh="请将设备横屏" data-en="Please rotate your device">请将设备横屏</div>
+    <small data-zh="横屏体验完整的数据雨景" data-en="Landscape for the full experience">横屏体验完整的数据雨景</small>
+  </div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

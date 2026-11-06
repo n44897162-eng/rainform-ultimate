@@ -1,0 +1,1716 @@
+{
+  "generatedAt": "2026-11-05T17:58:59.466Z",
+  "environment": {
+    "generatedAt": "2026-11-05T17:56:26.295Z",
+    "gateway": "already running",
+    "web": {
+      "driver": "playwright-core 1.64.1",
+      "browser": "Google Chrome (headless, SwiftShader WebGL2)",
+      "url": "http://127.0.0.1:8787/",
+      "standalone": "F:\\Rainform-Ultimate\\Rainform-Ultimate-standalone.html"
+    },
+    "win": {
+      "driver": "playwright-core connectOverCDP",
+      "exe": "F:\\Rainform-Ultimate\\app\\desktop\\dist\\win-unpacked\\Rainform Ultimate.exe",
+      "port": 9332,
+      "url": "file:///F:/Rainform-Ultimate/app/desktop/dist/win-unpacked/resources/app.asar/www/index.html?weather=server&auto=1&server=http%3A%2F%2F127.0.0.1%3A8787",
+      "runtime": "Electron 33 / Chromium"
+    },
+    "android": {
+      "driver": "raw CDP over adb forward",
+      "apk": "F:\\Rainform-Ultimate\\dist\\Rainform-Ultimate-v1.0.0.apk",
+      "pid": "2486",
+      "emulator": "Android 11 / API 30 / x86_64 / SwiftShader",
+      "url": "http://127.0.0.1:36491/index.html"
+    }
+  },
+  "summary": {
+    "total": 210,
+    "passed": 207,
+    "failed": 0,
+    "skipped": 3
+  },
+  "rows": [
+    {
+      "platform": "web",
+      "group": "A 启动与渲染",
+      "label": "A01 页面完成加载且节点就绪",
+      "status": "PASS",
+      "detail": "{\"ready\":\"complete\",\"nodes\":335}",
+      "time": "2026-11-05T17:56:30.273Z"
+    },
+    {
+      "platform": "web",
+      "group": "A 启动与渲染",
+      "label": "A02 加载遮罩已关闭",
+      "status": "PASS",
+      "detail": "loaderDone=true",
+      "time": "2026-11-05T17:56:30.273Z"
+    },
+    {
+      "platform": "web",
+      "group": "A 启动与渲染",
+      "label": "A03 Rainform 主程序已启动",
+      "status": "PASS",
+      "detail": "",
+      "time": "2026-11-05T17:56:30.273Z"
+    },
+    {
+      "platform": "web",
+      "group": "A 启动与渲染",
+      "label": "A04 RainWeather 数据层已启动",
+      "status": "PASS",
+      "detail": "",
+      "time": "2026-11-05T17:56:30.273Z"
+    },
+    {
+      "platform": "web",
+      "group": "A 启动与渲染",
+      "label": "A05 公共 API 契约完整",
+      "status": "PASS",
+      "detail": "missing=[]",
+      "time": "2026-11-05T17:56:30.273Z"
+    },
+    {
+      "platform": "web",
+      "group": "A 启动与渲染",
+      "label": "A06 3D 画布尺寸有效",
+      "status": "PASS",
+      "detail": "",
+      "time": "2026-11-05T17:56:30.274Z"
+    },
+    {
+      "platform": "web",
+      "group": "A 启动与渲染",
+      "label": "A07 未进入 WebGL 错误页",
+      "status": "PASS",
+      "detail": "",
+      "time": "2026-11-05T17:56:30.274Z"
+    },
+    {
+      "platform": "web",
+      "group": "A 启动与渲染",
+      "label": "A08 无横向溢出",
+      "status": "PASS",
+      "detail": "1600 <= 1600",
+      "time": "2026-11-05T17:56:30.274Z"
+    },
+    {
+      "platform": "web",
+      "group": "A 启动与渲染",
+      "label": "A09 渲染帧持续推进",
+      "status": "PASS",
+      "detail": "{\"s1\":{\"n\":34,\"min\":0.2241090833225277,\"max\":1.976848797268588,\"sum\":25.470101027564017,\"tiny\":17,\"big\":11,\"crowns\":17,\"jets\":10,\"beads\":254},\"s2\":{\"n\":54,\"min\":0.21247677733194406,\"max\":1.976848797268588,\"sum\":36.51891838723329,\"tiny\":31,\"big\":14,\"crowns\":23,\"jets\":13,\"beads\":350}}",
+      "time": "2026-11-05T17:56:31.382Z"
+    },
+    {
+      "platform": "web",
+      "group": "A 启动与渲染",
+      "label": "A10 画面非空白",
+      "status": "PASS",
+      "detail": "{\"var\":31.293,\"mean\":23.59,\"size\":[1600,1000]}",
+      "time": "2026-11-05T17:56:33.754Z"
+    },
+    {
+      "platform": "web",
+      "group": "A 启动与渲染",
+      "label": "A11 启动期零 JS 异常",
+      "status": "PASS",
+      "detail": "[]",
+      "time": "2026-11-05T17:56:33.754Z"
+    },
+    {
+      "platform": "web",
+      "group": "A 启动与渲染",
+      "label": "A12 渲染循环持续推进（后端无关）",
+      "status": "PASS",
+      "detail": "{\"backend\":\"gl\",\"from\":101,\"to\":118,\"drops\":0}",
+      "time": "2026-11-05T17:56:34.618Z"
+    },
+    {
+      "platform": "web",
+      "group": "B 3D 旋转",
+      "label": "B01 初始相机角度有效",
+      "status": "PASS",
+      "detail": "{\"t\":0.5235987755982988,\"yaw\":\"30°\"}",
+      "time": "2026-11-05T17:56:34.619Z"
+    },
+    {
+      "platform": "web",
+      "group": "B 3D 旋转",
+      "label": "B02 30°×2 步进合计 60°",
+      "status": "PASS",
+      "detail": "{\"d\":60}",
+      "time": "2026-11-05T17:56:34.620Z"
+    },
+    {
+      "platform": "web",
+      "group": "B 3D 旋转",
+      "label": "B03 反向 -30° 回退正确",
+      "status": "PASS",
+      "detail": "{\"d\":-30}",
+      "time": "2026-11-05T17:56:34.622Z"
+    },
+    {
+      "platform": "web",
+      "group": "B 3D 旋转",
+      "label": "B04 顶部旋转按钮 +30°",
+      "status": "PASS",
+      "detail": "{\"d\":30}",
+      "time": "2026-11-05T17:56:34.632Z"
+    },
+    {
+      "platform": "web",
+      "group": "B 3D 旋转",
+      "label": "B05 反向按钮 -30°",
+      "status": "PASS",
+      "detail": "{\"d\":-30}",
+      "time": "2026-11-05T17:56:34.633Z"
+    },
+    {
+      "platform": "web",
+      "group": "B 3D 旋转",
+      "label": "B06 移动端胶囊旋转 +30°",
+      "status": "PASS",
+      "detail": "{\"d\":30}",
+      "time": "2026-11-05T17:56:34.634Z"
+    },
+    {
+      "platform": "web",
+      "group": "B 3D 旋转",
+      "label": "B07 键盘 ArrowRight +30°",
+      "status": "PASS",
+      "detail": "{\"d\":30}",
+      "time": "2026-11-05T17:56:34.635Z"
+    },
+    {
+      "platform": "web",
+      "group": "B 3D 旋转",
+      "label": "B08 拖拽轨道相机改变角度",
+      "status": "PASS",
+      "detail": "{\"d\":-36}",
+      "time": "2026-11-05T17:56:34.637Z"
+    },
+    {
+      "platform": "web",
+      "group": "B 3D 旋转",
+      "label": "B09 视角复位回到默认 30°",
+      "status": "PASS",
+      "detail": "{\"d\":30}",
+      "time": "2026-11-05T17:56:34.639Z"
+    },
+    {
+      "platform": "web",
+      "group": "B 3D 旋转",
+      "label": "B10 旋转后画面确实变化",
+      "status": "PASS",
+      "detail": "{\"var\":29.956,\"mean\":23.32,\"size\":[1600,1000],\"diff\":12.234}",
+      "time": "2026-11-05T17:56:39.792Z"
+    },
+    {
+      "platform": "web",
+      "group": "B 3D 旋转",
+      "label": "B11 角度读数与状态同步",
+      "status": "PASS",
+      "detail": "{\"yaw\":\"120°\",\"t\":120}",
+      "time": "2026-11-05T17:56:40.710Z"
+    },
+    {
+      "platform": "web",
+      "group": "B 3D 旋转",
+      "label": "B12 自动旋转开关",
+      "status": "PASS",
+      "detail": "{\"on\":true,\"off\":false}",
+      "time": "2026-11-05T17:56:40.712Z"
+    },
+    {
+      "platform": "web",
+      "group": "C 图表与拟合",
+      "label": "C01 图表开关 off/on",
+      "status": "PASS",
+      "detail": "{\"a\":true,\"b\":false,\"cls\":true,\"c\":true}",
+      "time": "2026-11-05T17:56:40.713Z"
+    },
+    {
+      "platform": "web",
+      "group": "C 图表与拟合",
+      "label": "C02 曲线编辑器按钮切换图表",
+      "status": "PASS",
+      "detail": "{\"a\":true,\"b\":false}",
+      "time": "2026-11-05T17:56:40.716Z"
+    },
+    {
+      "platform": "web",
+      "group": "C 图表与拟合",
+      "label": "C03 底部胶囊图表按钮",
+      "status": "PASS",
+      "detail": "{\"a\":true,\"b\":false}",
+      "time": "2026-11-05T17:56:40.718Z"
+    },
+    {
+      "platform": "web",
+      "group": "C 图表与拟合",
+      "label": "C04 快捷键 C 切换图表",
+      "status": "PASS",
+      "detail": "{\"a\":true,\"b\":false}",
+      "time": "2026-11-05T17:56:40.719Z"
+    },
+    {
+      "platform": "web",
+      "group": "C 图表与拟合",
+      "label": "C05 平滑拟合开关与拟合度",
+      "status": "PASS",
+      "detail": "{\"a\":{\"s\":true,\"amt\":0.85,\"mode\":\"平滑\",\"pct\":\"85%\"},\"b\":false}",
+      "time": "2026-11-05T17:56:40.737Z"
+    },
+    {
+      "platform": "web",
+      "group": "C 图表与拟合",
+      "label": "C06 拟合度滑块生效",
+      "status": "PASS",
+      "detail": "{\"amt\":0.3,\"pct\":\"30%\"}",
+      "time": "2026-11-05T17:56:40.741Z"
+    },
+    {
+      "platform": "web",
+      "group": "C 图表与拟合",
+      "label": "C07 快捷键 S 切换平滑",
+      "status": "PASS",
+      "detail": "{\"a\":true,\"b\":false}",
+      "time": "2026-11-05T17:56:40.747Z"
+    },
+    {
+      "platform": "web",
+      "group": "D 数据与播放",
+      "label": "D01 update() 25 点数据生效",
+      "status": "PASS",
+      "detail": "{\"rain\":\"3.9\"}",
+      "time": "2026-11-05T17:56:40.752Z"
+    },
+    {
+      "platform": "web",
+      "group": "D 数据与播放",
+      "label": "D02 非法长度数据被拒绝且不崩溃",
+      "status": "PASS",
+      "detail": "{\"ok\":true}",
+      "time": "2026-11-05T17:56:40.753Z"
+    },
+    {
+      "platform": "web",
+      "group": "D 数据与播放",
+      "label": "D03 时间轴 setTime 生效",
+      "status": "PASS",
+      "detail": "{\"t\":12,\"tv\":\"22:15\"}",
+      "time": "2026-11-05T17:56:40.754Z"
+    },
+    {
+      "platform": "web",
+      "group": "D 数据与播放",
+      "label": "D04 播放/暂停切换",
+      "status": "PASS",
+      "detail": "{\"a\":true,\"b\":false,\"c\":true}",
+      "time": "2026-11-05T17:56:40.757Z"
+    },
+    {
+      "platform": "web",
+      "group": "D 数据与播放",
+      "label": "D05 四档画质均可切换",
+      "status": "PASS",
+      "detail": "[[0,\"低\"],[1,\"中\"],[2,\"高\"],[3,\"极致\"]]",
+      "time": "2026-11-05T17:56:40.829Z"
+    },
+    {
+      "platform": "web",
+      "group": "D 数据与播放",
+      "label": "D06 数据预设切换",
+      "status": "PASS",
+      "detail": "{\"name\":\"drizzle\"}",
+      "time": "2026-11-05T17:56:41.487Z"
+    },
+    {
+      "platform": "web",
+      "group": "D 数据与播放",
+      "label": "D07 雨声动态映射可用",
+      "status": "PASS",
+      "detail": "{\"a\":{\"n\":0.025,\"soft\":0.001890157590832637,\"hard\":0.00020666266235924033,\"bright\":0.043475942667556236},\"b\":{\"n\":0.9,\"soft\":0.836011527916834,\"hard\":0.7847977905697834,\"bright\":0.9143366600529774}}",
+      "time": "2026-11-05T17:56:41.491Z"
+    },
+    {
+      "platform": "web",
+      "group": "E UI 交互",
+      "label": "E01 面板收起/展开状态同步",
+      "status": "PASS",
+      "detail": "{\"a\":{\"s\":true,\"c\":true,\"f\":\"true\"},\"b\":false}",
+      "time": "2026-11-05T17:56:41.493Z"
+    },
+    {
+      "platform": "web",
+      "group": "E UI 交互",
+      "label": "E02 顶部按钮与 FAB 状态一致",
+      "status": "PASS",
+      "detail": "{\"a\":true,\"b\":false}",
+      "time": "2026-11-05T17:56:41.494Z"
+    },
+    {
+      "platform": "web",
+      "group": "E UI 交互",
+      "label": "E03 中英双语切换",
+      "status": "PASS",
+      "detail": "{\"a\":\"zh\",\"b\":\"en\",\"btn\":\"中\"}",
+      "time": "2026-11-05T17:56:41.520Z"
+    },
+    {
+      "platform": "web",
+      "group": "E UI 交互",
+      "label": "E04 壁纸模式开关",
+      "status": "PASS",
+      "detail": "{\"a\":true,\"b\":false}",
+      "time": "2026-11-05T17:56:41.523Z"
+    },
+    {
+      "platform": "web",
+      "group": "E UI 交互",
+      "label": "E05 截图触发",
+      "status": "PASS",
+      "detail": "{\"shot\":true}",
+      "time": "2026-11-05T17:56:41.524Z"
+    },
+    {
+      "platform": "web",
+      "group": "E UI 交互",
+      "label": "E06 天气抽屉开/关",
+      "status": "PASS",
+      "detail": "{\"a\":true,\"b\":false}",
+      "time": "2026-11-05T17:56:41.531Z"
+    },
+    {
+      "platform": "web",
+      "group": "E UI 交互",
+      "label": "E07 声音开关",
+      "status": "PASS",
+      "detail": "{\"cls\":\"\"}",
+      "time": "2026-11-05T17:56:41.736Z"
+    },
+    {
+      "platform": "web",
+      "group": "F 实时天气",
+      "label": "F01 数据源 >= 11 种",
+      "status": "PASS",
+      "detail": "",
+      "time": "2026-11-05T17:56:42.070Z"
+    },
+    {
+      "platform": "web",
+      "group": "F 实时天气",
+      "label": "F02 REST /api/weather 实时",
+      "status": "PASS",
+      "detail": "{\"status\":\"live\",\"src\":\"offline-sample\",\"n\":25,\"err\":null}",
+      "time": "2026-11-05T17:56:44.695Z"
+    },
+    {
+      "platform": "web",
+      "group": "F 实时天气",
+      "label": "F03 爬虫 /api/crawl 实时",
+      "status": "PASS",
+      "detail": "{\"status\":\"live\",\"src\":\"offline-sample\",\"n\":25,\"err\":null}",
+      "time": "2026-11-05T17:56:47.304Z"
+    },
+    {
+      "platform": "web",
+      "group": "F 实时天气",
+      "label": "F04 SSE /api/stream 实时",
+      "status": "PASS",
+      "detail": "{\"status\":\"live\",\"src\":\"offline-sample\",\"n\":25,\"err\":null}",
+      "time": "2026-11-05T17:56:49.938Z"
+    },
+    {
+      "platform": "web",
+      "group": "F 实时天气",
+      "label": "F05 WebSocket /ws 实时",
+      "status": "PASS",
+      "detail": "{\"status\":\"live\",\"src\":\"offline-sample\",\"n\":25,\"err\":null}",
+      "time": "2026-11-05T17:56:52.556Z"
+    },
+    {
+      "platform": "web",
+      "group": "F 实时天气",
+      "label": "F06 自定义 HTTP + valuePath 映射",
+      "status": "PASS",
+      "detail": "{\"status\":\"live\",\"src\":\"offline-sample\",\"n\":25,\"err\":null}",
+      "time": "2026-11-05T17:56:55.175Z"
+    },
+    {
+      "platform": "web",
+      "group": "F 实时天气",
+      "label": "F07 CSV 导入 25 点归一化",
+      "status": "PASS",
+      "detail": "{\"n\":25,\"v0\":2.4,\"v1\":0.1,\"h\":25}",
+      "time": "2026-11-05T17:56:55.197Z"
+    },
+    {
+      "platform": "web",
+      "group": "F 实时天气",
+      "label": "F08 JSON 对象导入",
+      "status": "PASS",
+      "detail": "{\"n\":25,\"v0\":1.2}",
+      "time": "2026-11-05T17:56:55.198Z"
+    },
+    {
+      "platform": "web",
+      "group": "F 实时天气",
+      "label": "F09 死端点降级链不黑屏",
+      "status": "PASS",
+      "detail": "{\"status\":\"stale\",\"n\":25}",
+      "time": "2026-11-05T17:56:58.405Z"
+    },
+    {
+      "platform": "web",
+      "group": "F 实时天气",
+      "label": "F10 register() 运行时注册数据源",
+      "status": "PASS",
+      "detail": "{\"status\":\"live\",\"n\":25}",
+      "time": "2026-11-05T17:56:59.614Z"
+    },
+    {
+      "platform": "web",
+      "group": "F 实时天气",
+      "label": "F11 状态 UI 角标/状态灯/曲线预览",
+      "status": "PASS",
+      "detail": "{\"badge\":\"LIVE\",\"txt\":\"实时\",\"dot\":\"w-dot w-live\",\"spark\":349}",
+      "time": "2026-11-05T17:56:59.616Z"
+    },
+    {
+      "platform": "web",
+      "group": "F 实时天气",
+      "label": "F12 导入非法数据不崩溃",
+      "status": "PASS",
+      "detail": "{\"ok\":true,\"handled\":\"Error: Precipitation array is empty\"}",
+      "time": "2026-11-05T17:56:59.617Z"
+    },
+    {
+      "platform": "web",
+      "group": "G 边界场景",
+      "label": "G01 极小视口 320x480 无溢出",
+      "status": "PASS",
+      "detail": "{\"w\":320,\"i\":320,\"app\":320,\"scene\":512}",
+      "time": "2026-11-05T17:57:01.894Z"
+    },
+    {
+      "platform": "web",
+      "group": "G 边界场景",
+      "label": "G02 手机竖屏 390x844 无溢出",
+      "status": "PASS",
+      "detail": "{\"w\":390,\"i\":390,\"app\":390,\"scene\":624}",
+      "time": "2026-11-05T17:57:02.183Z"
+    },
+    {
+      "platform": "web",
+      "group": "G 边界场景",
+      "label": "G03 横屏 844x390 无溢出",
+      "status": "PASS",
+      "detail": "{\"w\":844,\"i\":844,\"app\":844,\"scene\":844}",
+      "time": "2026-11-05T17:57:02.492Z"
+    },
+    {
+      "platform": "web",
+      "group": "G 边界场景",
+      "label": "G04 超大视口 2560x1440 无溢出",
+      "status": "PASS",
+      "detail": "{\"w\":2560,\"i\":2560,\"app\":2560,\"scene\":844}",
+      "time": "2026-11-05T17:57:02.783Z"
+    },
+    {
+      "platform": "web",
+      "group": "G 边界场景",
+      "label": "G05 横竖屏切换后 3D 仍可旋转",
+      "status": "PASS",
+      "detail": "{\"d\":30}",
+      "time": "2026-11-05T17:57:02.784Z"
+    },
+    {
+      "platform": "web",
+      "group": "G 边界场景",
+      "label": "G06 快速连点 20 次旋转不崩溃",
+      "status": "PASS",
+      "detail": "{\"ok\":true,\"t\":13.089969389957467}",
+      "time": "2026-11-05T17:57:02.785Z"
+    },
+    {
+      "platform": "web",
+      "group": "G 边界场景",
+      "label": "G07 极端数据（0 / 负值 / 超大值）",
+      "status": "PASS",
+      "detail": "{\"ok\":true,\"n\":25}",
+      "time": "2026-11-05T17:57:02.786Z"
+    },
+    {
+      "platform": "web",
+      "group": "G 边界场景",
+      "label": "G08 损坏的 localStorage 不阻断启动",
+      "status": "PASS",
+      "detail": "{\"ok\":true,\"cfg\":true}",
+      "time": "2026-11-05T17:57:02.788Z"
+    },
+    {
+      "platform": "web",
+      "group": "G 边界场景",
+      "label": "G09 断网时仍可回到演示数据",
+      "status": "PASS",
+      "detail": "{\"ok\":true,\"s\":\"idle\",\"n\":25}",
+      "time": "2026-11-05T17:57:02.791Z"
+    },
+    {
+      "platform": "web",
+      "group": "G 边界场景",
+      "label": "G10 全流程零 JS 异常",
+      "status": "PASS",
+      "detail": "[]",
+      "time": "2026-11-05T17:57:02.791Z"
+    },
+    {
+      "platform": "web",
+      "group": "H 平台差异",
+      "label": "H01 PWA manifest 与 Service Worker",
+      "status": "PASS",
+      "detail": "{\"display\":\"standalone\",\"icons\":4,\"sw\":true}",
+      "time": "2026-11-05T17:57:02.794Z"
+    },
+    {
+      "platform": "web",
+      "group": "H 平台差异",
+      "label": "H02 单文件 HTML 可直接打开",
+      "status": "PASS",
+      "detail": "bytes=799594",
+      "time": "2026-11-05T17:57:02.799Z"
+    },
+    {
+      "platform": "web",
+      "group": "H 平台差异",
+      "label": "H03 原生 HTTP 桥",
+      "status": "SKIP",
+      "detail": "Web 端使用浏览器 fetch，不适用",
+      "time": "2026-11-05T17:57:02.799Z"
+    },
+    {
+      "platform": "win",
+      "group": "A 启动与渲染",
+      "label": "A01 页面完成加载且节点就绪",
+      "status": "PASS",
+      "detail": "{\"ready\":\"complete\",\"nodes\":329}",
+      "time": "2026-11-05T17:57:13.693Z"
+    },
+    {
+      "platform": "win",
+      "group": "A 启动与渲染",
+      "label": "A02 加载遮罩已关闭",
+      "status": "PASS",
+      "detail": "loaderDone=true",
+      "time": "2026-11-05T17:57:13.693Z"
+    },
+    {
+      "platform": "win",
+      "group": "A 启动与渲染",
+      "label": "A03 Rainform 主程序已启动",
+      "status": "PASS",
+      "detail": "",
+      "time": "2026-11-05T17:57:13.693Z"
+    },
+    {
+      "platform": "win",
+      "group": "A 启动与渲染",
+      "label": "A04 RainWeather 数据层已启动",
+      "status": "PASS",
+      "detail": "",
+      "time": "2026-11-05T17:57:13.693Z"
+    },
+    {
+      "platform": "win",
+      "group": "A 启动与渲染",
+      "label": "A05 公共 API 契约完整",
+      "status": "PASS",
+      "detail": "missing=[]",
+      "time": "2026-11-05T17:57:13.693Z"
+    },
+    {
+      "platform": "win",
+      "group": "A 启动与渲染",
+      "label": "A06 3D 画布尺寸有效",
+      "status": "PASS",
+      "detail": "",
+      "time": "2026-11-05T17:57:13.693Z"
+    },
+    {
+      "platform": "win",
+      "group": "A 启动与渲染",
+      "label": "A07 未进入 WebGL 错误页",
+      "status": "PASS",
+      "detail": "",
+      "time": "2026-11-05T17:57:13.693Z"
+    },
+    {
+      "platform": "win",
+      "group": "A 启动与渲染",
+      "label": "A08 无横向溢出",
+      "status": "PASS",
+      "detail": "1430 <= 1430",
+      "time": "2026-11-05T17:57:13.693Z"
+    },
+    {
+      "platform": "win",
+      "group": "A 启动与渲染",
+      "label": "A09 渲染帧持续推进",
+      "status": "PASS",
+      "detail": "{\"s1\":{\"n\":84,\"min\":0.2193758981623641,\"max\":1.7216003494005057,\"sum\":50.78522430425519,\"tiny\":47,\"big\":17,\"crowns\":37,\"jets\":16,\"beads\":489},\"s2\":{\"n\":148,\"min\":0.21381584075809895,\"max\":1.862769108666575,\"sum\":90.68851937490915,\"tiny\":83,\"big\":29,\"crowns\":65,\"jets\":27,\"beads\":830}}",
+      "time": "2026-11-05T17:57:14.808Z"
+    },
+    {
+      "platform": "win",
+      "group": "A 启动与渲染",
+      "label": "A10 画面非空白",
+      "status": "PASS",
+      "detail": "{\"var\":30.644,\"mean\":23.59,\"size\":[1788,1003]}",
+      "time": "2026-11-05T17:57:15.941Z"
+    },
+    {
+      "platform": "win",
+      "group": "A 启动与渲染",
+      "label": "A11 启动期零 JS 异常",
+      "status": "PASS",
+      "detail": "[]",
+      "time": "2026-11-05T17:57:15.941Z"
+    },
+    {
+      "platform": "win",
+      "group": "A 启动与渲染",
+      "label": "A12 渲染循环持续推进（后端无关）",
+      "status": "PASS",
+      "detail": "{\"backend\":\"gl\",\"from\":202,\"to\":252,\"drops\":0}",
+      "time": "2026-11-05T17:57:16.803Z"
+    },
+    {
+      "platform": "win",
+      "group": "B 3D 旋转",
+      "label": "B01 初始相机角度有效",
+      "status": "PASS",
+      "detail": "{\"t\":0.5235987755982988,\"yaw\":\"30°\"}",
+      "time": "2026-11-05T17:57:16.804Z"
+    },
+    {
+      "platform": "win",
+      "group": "B 3D 旋转",
+      "label": "B02 30°×2 步进合计 60°",
+      "status": "PASS",
+      "detail": "{\"d\":60}",
+      "time": "2026-11-05T17:57:16.804Z"
+    },
+    {
+      "platform": "win",
+      "group": "B 3D 旋转",
+      "label": "B03 反向 -30° 回退正确",
+      "status": "PASS",
+      "detail": "{\"d\":-30}",
+      "time": "2026-11-05T17:57:16.805Z"
+    },
+    {
+      "platform": "win",
+      "group": "B 3D 旋转",
+      "label": "B04 顶部旋转按钮 +30°",
+      "status": "PASS",
+      "detail": "{\"d\":30}",
+      "time": "2026-11-05T17:57:16.806Z"
+    },
+    {
+      "platform": "win",
+      "group": "B 3D 旋转",
+      "label": "B05 反向按钮 -30°",
+      "status": "PASS",
+      "detail": "{\"d\":-30}",
+      "time": "2026-11-05T17:57:16.809Z"
+    },
+    {
+      "platform": "win",
+      "group": "B 3D 旋转",
+      "label": "B06 移动端胶囊旋转 +30°",
+      "status": "PASS",
+      "detail": "{\"d\":30}",
+      "time": "2026-11-05T17:57:16.810Z"
+    },
+    {
+      "platform": "win",
+      "group": "B 3D 旋转",
+      "label": "B07 键盘 ArrowRight +30°",
+      "status": "PASS",
+      "detail": "{\"d\":30}",
+      "time": "2026-11-05T17:57:16.812Z"
+    },
+    {
+      "platform": "win",
+      "group": "B 3D 旋转",
+      "label": "B08 拖拽轨道相机改变角度",
+      "status": "PASS",
+      "detail": "{\"d\":-36}",
+      "time": "2026-11-05T17:57:16.813Z"
+    },
+    {
+      "platform": "win",
+      "group": "B 3D 旋转",
+      "label": "B09 视角复位回到默认 30°",
+      "status": "PASS",
+      "detail": "{\"d\":30}",
+      "time": "2026-11-05T17:57:16.816Z"
+    },
+    {
+      "platform": "win",
+      "group": "B 3D 旋转",
+      "label": "B10 旋转后画面确实变化",
+      "status": "PASS",
+      "detail": "{\"var\":29.36,\"mean\":23.16,\"size\":[1788,1003],\"diff\":10.208}",
+      "time": "2026-11-05T17:57:19.676Z"
+    },
+    {
+      "platform": "win",
+      "group": "B 3D 旋转",
+      "label": "B11 角度读数与状态同步",
+      "status": "PASS",
+      "detail": "{\"yaw\":\"120°\",\"t\":120}",
+      "time": "2026-11-05T17:57:20.589Z"
+    },
+    {
+      "platform": "win",
+      "group": "B 3D 旋转",
+      "label": "B12 自动旋转开关",
+      "status": "PASS",
+      "detail": "{\"on\":true,\"off\":false}",
+      "time": "2026-11-05T17:57:20.590Z"
+    },
+    {
+      "platform": "win",
+      "group": "C 图表与拟合",
+      "label": "C01 图表开关 off/on",
+      "status": "PASS",
+      "detail": "{\"a\":true,\"b\":false,\"cls\":true,\"c\":true}",
+      "time": "2026-11-05T17:57:20.591Z"
+    },
+    {
+      "platform": "win",
+      "group": "C 图表与拟合",
+      "label": "C02 曲线编辑器按钮切换图表",
+      "status": "PASS",
+      "detail": "{\"a\":true,\"b\":false}",
+      "time": "2026-11-05T17:57:20.592Z"
+    },
+    {
+      "platform": "win",
+      "group": "C 图表与拟合",
+      "label": "C03 底部胶囊图表按钮",
+      "status": "PASS",
+      "detail": "{\"a\":true,\"b\":false}",
+      "time": "2026-11-05T17:57:20.592Z"
+    },
+    {
+      "platform": "win",
+      "group": "C 图表与拟合",
+      "label": "C04 快捷键 C 切换图表",
+      "status": "PASS",
+      "detail": "{\"a\":true,\"b\":false}",
+      "time": "2026-11-05T17:57:20.596Z"
+    },
+    {
+      "platform": "win",
+      "group": "C 图表与拟合",
+      "label": "C05 平滑拟合开关与拟合度",
+      "status": "PASS",
+      "detail": "{\"a\":{\"s\":true,\"amt\":0.85,\"mode\":\"平滑\",\"pct\":\"85%\"},\"b\":false}",
+      "time": "2026-11-05T17:57:20.603Z"
+    },
+    {
+      "platform": "win",
+      "group": "C 图表与拟合",
+      "label": "C06 拟合度滑块生效",
+      "status": "PASS",
+      "detail": "{\"amt\":0.3,\"pct\":\"30%\"}",
+      "time": "2026-11-05T17:57:20.621Z"
+    },
+    {
+      "platform": "win",
+      "group": "C 图表与拟合",
+      "label": "C07 快捷键 S 切换平滑",
+      "status": "PASS",
+      "detail": "{\"a\":true,\"b\":false}",
+      "time": "2026-11-05T17:57:20.627Z"
+    },
+    {
+      "platform": "win",
+      "group": "D 数据与播放",
+      "label": "D01 update() 25 点数据生效",
+      "status": "PASS",
+      "detail": "{\"rain\":\"0.3\"}",
+      "time": "2026-11-05T17:57:20.630Z"
+    },
+    {
+      "platform": "win",
+      "group": "D 数据与播放",
+      "label": "D02 非法长度数据被拒绝且不崩溃",
+      "status": "PASS",
+      "detail": "{\"ok\":true}",
+      "time": "2026-11-05T17:57:20.631Z"
+    },
+    {
+      "platform": "win",
+      "group": "D 数据与播放",
+      "label": "D03 时间轴 setTime 生效",
+      "status": "PASS",
+      "detail": "{\"t\":12,\"tv\":\"01:50\"}",
+      "time": "2026-11-05T17:57:20.632Z"
+    },
+    {
+      "platform": "win",
+      "group": "D 数据与播放",
+      "label": "D04 播放/暂停切换",
+      "status": "PASS",
+      "detail": "{\"a\":true,\"b\":false,\"c\":true}",
+      "time": "2026-11-05T17:57:20.637Z"
+    },
+    {
+      "platform": "win",
+      "group": "D 数据与播放",
+      "label": "D05 四档画质均可切换",
+      "status": "PASS",
+      "detail": "[[0,\"低\"],[1,\"中\"],[2,\"高\"],[3,\"极致\"]]",
+      "time": "2026-11-05T17:57:20.706Z"
+    },
+    {
+      "platform": "win",
+      "group": "D 数据与播放",
+      "label": "D06 数据预设切换",
+      "status": "PASS",
+      "detail": "{\"name\":\"drizzle\"}",
+      "time": "2026-11-05T17:57:20.722Z"
+    },
+    {
+      "platform": "win",
+      "group": "D 数据与播放",
+      "label": "D07 雨声动态映射可用",
+      "status": "PASS",
+      "detail": "{\"a\":{\"n\":0.025,\"soft\":0.001890157590832637,\"hard\":0.00020666266235924033,\"bright\":0.043475942667556236},\"b\":{\"n\":0.9,\"soft\":0.836011527916834,\"hard\":0.7847977905697834,\"bright\":0.9143366600529774}}",
+      "time": "2026-11-05T17:57:20.725Z"
+    },
+    {
+      "platform": "win",
+      "group": "E UI 交互",
+      "label": "E01 面板收起/展开状态同步",
+      "status": "PASS",
+      "detail": "{\"a\":{\"s\":true,\"c\":true,\"f\":\"true\"},\"b\":false}",
+      "time": "2026-11-05T17:57:20.728Z"
+    },
+    {
+      "platform": "win",
+      "group": "E UI 交互",
+      "label": "E02 顶部按钮与 FAB 状态一致",
+      "status": "PASS",
+      "detail": "{\"a\":true,\"b\":false}",
+      "time": "2026-11-05T17:57:20.729Z"
+    },
+    {
+      "platform": "win",
+      "group": "E UI 交互",
+      "label": "E03 中英双语切换",
+      "status": "PASS",
+      "detail": "{\"a\":\"zh\",\"b\":\"en\",\"btn\":\"中\"}",
+      "time": "2026-11-05T17:57:20.731Z"
+    },
+    {
+      "platform": "win",
+      "group": "E UI 交互",
+      "label": "E04 壁纸模式开关",
+      "status": "PASS",
+      "detail": "{\"a\":true,\"b\":false}",
+      "time": "2026-11-05T17:57:20.738Z"
+    },
+    {
+      "platform": "win",
+      "group": "E UI 交互",
+      "label": "E05 截图触发",
+      "status": "PASS",
+      "detail": "{\"shot\":true}",
+      "time": "2026-11-05T17:57:20.739Z"
+    },
+    {
+      "platform": "win",
+      "group": "E UI 交互",
+      "label": "E06 天气抽屉开/关",
+      "status": "PASS",
+      "detail": "{\"a\":true,\"b\":false}",
+      "time": "2026-11-05T17:57:20.910Z"
+    },
+    {
+      "platform": "win",
+      "group": "E UI 交互",
+      "label": "E07 声音开关",
+      "status": "PASS",
+      "detail": "{\"cls\":\"\"}",
+      "time": "2026-11-05T17:57:21.074Z"
+    },
+    {
+      "platform": "win",
+      "group": "F 实时天气",
+      "label": "F01 数据源 >= 11 种",
+      "status": "PASS",
+      "detail": "",
+      "time": "2026-11-05T17:57:21.077Z"
+    },
+    {
+      "platform": "win",
+      "group": "F 实时天气",
+      "label": "F02 REST /api/weather 实时",
+      "status": "PASS",
+      "detail": "{\"status\":\"live\",\"src\":\"offline-sample\",\"n\":25,\"err\":null}",
+      "time": "2026-11-05T17:57:23.738Z"
+    },
+    {
+      "platform": "win",
+      "group": "F 实时天气",
+      "label": "F03 爬虫 /api/crawl 实时",
+      "status": "PASS",
+      "detail": "{\"status\":\"live\",\"src\":\"offline-sample\",\"n\":25,\"err\":null}",
+      "time": "2026-11-05T17:57:26.348Z"
+    },
+    {
+      "platform": "win",
+      "group": "F 实时天气",
+      "label": "F04 SSE /api/stream 实时",
+      "status": "PASS",
+      "detail": "{\"status\":\"live\",\"src\":\"offline-sample\",\"n\":25,\"err\":null}",
+      "time": "2026-11-05T17:57:28.961Z"
+    },
+    {
+      "platform": "win",
+      "group": "F 实时天气",
+      "label": "F05 WebSocket /ws 实时",
+      "status": "PASS",
+      "detail": "{\"status\":\"live\",\"src\":\"offline-sample\",\"n\":25,\"err\":null}",
+      "time": "2026-11-05T17:57:31.573Z"
+    },
+    {
+      "platform": "win",
+      "group": "F 实时天气",
+      "label": "F06 自定义 HTTP + valuePath 映射",
+      "status": "PASS",
+      "detail": "{\"status\":\"live\",\"src\":\"offline-sample\",\"n\":25,\"err\":null}",
+      "time": "2026-11-05T17:57:34.183Z"
+    },
+    {
+      "platform": "win",
+      "group": "F 实时天气",
+      "label": "F07 CSV 导入 25 点归一化",
+      "status": "PASS",
+      "detail": "{\"n\":25,\"v0\":2.4,\"v1\":0.1,\"h\":25}",
+      "time": "2026-11-05T17:57:34.190Z"
+    },
+    {
+      "platform": "win",
+      "group": "F 实时天气",
+      "label": "F08 JSON 对象导入",
+      "status": "PASS",
+      "detail": "{\"n\":25,\"v0\":1.2}",
+      "time": "2026-11-05T17:57:34.194Z"
+    },
+    {
+      "platform": "win",
+      "group": "F 实时天气",
+      "label": "F09 死端点降级链不黑屏",
+      "status": "PASS",
+      "detail": "{\"status\":\"stale\",\"n\":25}",
+      "time": "2026-11-05T17:57:37.401Z"
+    },
+    {
+      "platform": "win",
+      "group": "F 实时天气",
+      "label": "F10 register() 运行时注册数据源",
+      "status": "PASS",
+      "detail": "{\"status\":\"live\",\"n\":25}",
+      "time": "2026-11-05T17:57:38.608Z"
+    },
+    {
+      "platform": "win",
+      "group": "F 实时天气",
+      "label": "F11 状态 UI 角标/状态灯/曲线预览",
+      "status": "PASS",
+      "detail": "{\"badge\":\"LIVE\",\"txt\":\"实时\",\"dot\":\"w-dot w-live\",\"spark\":437}",
+      "time": "2026-11-05T17:57:38.611Z"
+    },
+    {
+      "platform": "win",
+      "group": "F 实时天气",
+      "label": "F12 导入非法数据不崩溃",
+      "status": "PASS",
+      "detail": "{\"ok\":true,\"handled\":\"Error: Precipitation array is empty\"}",
+      "time": "2026-11-05T17:57:38.612Z"
+    },
+    {
+      "platform": "win",
+      "group": "G 边界场景",
+      "label": "G01 极小视口 320x480 无溢出",
+      "status": "PASS",
+      "detail": "{\"w\":320,\"i\":320,\"app\":320,\"scene\":320}",
+      "time": "2026-11-05T17:57:38.941Z"
+    },
+    {
+      "platform": "win",
+      "group": "G 边界场景",
+      "label": "G02 手机竖屏 390x844 无溢出",
+      "status": "PASS",
+      "detail": "{\"w\":390,\"i\":390,\"app\":390.3999938964844,\"scene\":390}",
+      "time": "2026-11-05T17:57:39.236Z"
+    },
+    {
+      "platform": "win",
+      "group": "G 边界场景",
+      "label": "G03 横屏 844x390 无溢出",
+      "status": "PASS",
+      "detail": "{\"w\":844,\"i\":844,\"app\":844,\"scene\":844}",
+      "time": "2026-11-05T17:57:39.531Z"
+    },
+    {
+      "platform": "win",
+      "group": "G 边界场景",
+      "label": "G04 超大视口 2560x1440 无溢出",
+      "status": "PASS",
+      "detail": "{\"w\":2560,\"i\":2560,\"app\":2560,\"scene\":2560}",
+      "time": "2026-11-05T17:57:39.831Z"
+    },
+    {
+      "platform": "win",
+      "group": "G 边界场景",
+      "label": "G05 横竖屏切换后 3D 仍可旋转",
+      "status": "PASS",
+      "detail": "{\"d\":30}",
+      "time": "2026-11-05T17:57:39.833Z"
+    },
+    {
+      "platform": "win",
+      "group": "G 边界场景",
+      "label": "G06 快速连点 20 次旋转不崩溃",
+      "status": "PASS",
+      "detail": "{\"ok\":true,\"t\":13.089969389957467}",
+      "time": "2026-11-05T17:57:39.834Z"
+    },
+    {
+      "platform": "win",
+      "group": "G 边界场景",
+      "label": "G07 极端数据（0 / 负值 / 超大值）",
+      "status": "PASS",
+      "detail": "{\"ok\":true,\"n\":25}",
+      "time": "2026-11-05T17:57:39.836Z"
+    },
+    {
+      "platform": "win",
+      "group": "G 边界场景",
+      "label": "G08 损坏的 localStorage 不阻断启动",
+      "status": "PASS",
+      "detail": "{\"ok\":true,\"cfg\":true}",
+      "time": "2026-11-05T17:57:39.838Z"
+    },
+    {
+      "platform": "win",
+      "group": "G 边界场景",
+      "label": "G09 断网时仍可回到演示数据",
+      "status": "PASS",
+      "detail": "{\"ok\":true,\"s\":\"idle\",\"n\":25}",
+      "time": "2026-11-05T17:57:39.844Z"
+    },
+    {
+      "platform": "win",
+      "group": "G 边界场景",
+      "label": "G10 全流程零 JS 异常",
+      "status": "PASS",
+      "detail": "[]",
+      "time": "2026-11-05T17:57:39.844Z"
+    },
+    {
+      "platform": "win",
+      "group": "H 平台差异",
+      "label": "H03 原生 HTTP 桥可用",
+      "status": "PASS",
+      "detail": "{\"platform\":\"win32\",\"electron\":\"33.4.11\",\"ok\":true,\"status\":200}",
+      "time": "2026-11-05T17:57:39.851Z"
+    },
+    {
+      "platform": "win",
+      "group": "H 平台差异",
+      "label": "H04 窗口尺寸记忆配置存在",
+      "status": "PASS",
+      "detail": "{\"title\":\"如果降雨数据变成雨 · Rainform Ultimate\",\"lang\":\"zh-CN\"}",
+      "time": "2026-11-05T17:57:39.855Z"
+    },
+    {
+      "platform": "win",
+      "group": "H 平台差异",
+      "label": "H01 PWA manifest 与 Service Worker",
+      "status": "SKIP",
+      "detail": "桌面应用为 file:// 加载，不适用",
+      "time": "2026-11-05T17:57:39.855Z"
+    },
+    {
+      "platform": "android",
+      "group": "A 启动与渲染",
+      "label": "A01 页面完成加载且节点就绪",
+      "status": "PASS",
+      "detail": "{\"ready\":\"complete\",\"nodes\":331}",
+      "time": "2026-11-05T17:58:30.196Z"
+    },
+    {
+      "platform": "android",
+      "group": "A 启动与渲染",
+      "label": "A02 加载遮罩已关闭",
+      "status": "PASS",
+      "detail": "loaderDone=true",
+      "time": "2026-11-05T17:58:30.196Z"
+    },
+    {
+      "platform": "android",
+      "group": "A 启动与渲染",
+      "label": "A03 Rainform 主程序已启动",
+      "status": "PASS",
+      "detail": "",
+      "time": "2026-11-05T17:58:30.196Z"
+    },
+    {
+      "platform": "android",
+      "group": "A 启动与渲染",
+      "label": "A04 RainWeather 数据层已启动",
+      "status": "PASS",
+      "detail": "",
+      "time": "2026-11-05T17:58:30.196Z"
+    },
+    {
+      "platform": "android",
+      "group": "A 启动与渲染",
+      "label": "A05 公共 API 契约完整",
+      "status": "PASS",
+      "detail": "missing=[]",
+      "time": "2026-11-05T17:58:30.196Z"
+    },
+    {
+      "platform": "android",
+      "group": "A 启动与渲染",
+      "label": "A06 3D 画布尺寸有效",
+      "status": "PASS",
+      "detail": "",
+      "time": "2026-11-05T17:58:30.196Z"
+    },
+    {
+      "platform": "android",
+      "group": "A 启动与渲染",
+      "label": "A07 未进入 WebGL 错误页",
+      "status": "PASS",
+      "detail": "",
+      "time": "2026-11-05T17:58:30.196Z"
+    },
+    {
+      "platform": "android",
+      "group": "A 启动与渲染",
+      "label": "A08 无横向溢出",
+      "status": "PASS",
+      "detail": "320 <= 320",
+      "time": "2026-11-05T17:58:30.196Z"
+    },
+    {
+      "platform": "android",
+      "group": "A 启动与渲染",
+      "label": "A09 渲染帧持续推进",
+      "status": "PASS",
+      "detail": "{\"s1\":{\"n\":667,\"min\":0.08,\"max\":0.78,\"sum\":188.0350000000004,\"tiny\":445,\"big\":26,\"crowns\":26,\"jets\":3,\"beads\":366},\"s2\":{\"n\":1029,\"min\":0.08,\"max\":0.78,\"sum\":285.10000000000065,\"tiny\":698,\"big\":37,\"crowns\":37,\"jets\":4,\"beads\":554}}",
+      "time": "2026-11-05T17:58:31.352Z"
+    },
+    {
+      "platform": "android",
+      "group": "A 启动与渲染",
+      "label": "A10 画面非空白",
+      "status": "PASS",
+      "detail": "{\"var\":24.54,\"mean\":30.6,\"size\":[320,616]}",
+      "time": "2026-11-05T17:58:32.434Z"
+    },
+    {
+      "platform": "android",
+      "group": "A 启动与渲染",
+      "label": "A11 启动期零 JS 异常",
+      "status": "PASS",
+      "detail": "[]",
+      "time": "2026-11-05T17:58:32.434Z"
+    },
+    {
+      "platform": "android",
+      "group": "A 启动与渲染",
+      "label": "A12 渲染循环持续推进（后端无关）",
+      "status": "PASS",
+      "detail": "{\"backend\":\"2d\",\"from\":86,\"to\":103,\"drops\":220}",
+      "time": "2026-11-05T17:58:33.289Z"
+    },
+    {
+      "platform": "android",
+      "group": "B 3D 旋转",
+      "label": "B01 初始相机角度有效",
+      "status": "PASS",
+      "detail": "{\"t\":0.5235987755982988,\"yaw\":\"30°\"}",
+      "time": "2026-11-05T17:58:33.292Z"
+    },
+    {
+      "platform": "android",
+      "group": "B 3D 旋转",
+      "label": "B02 30°×2 步进合计 60°",
+      "status": "PASS",
+      "detail": "{\"d\":60}",
+      "time": "2026-11-05T17:58:33.297Z"
+    },
+    {
+      "platform": "android",
+      "group": "B 3D 旋转",
+      "label": "B03 反向 -30° 回退正确",
+      "status": "PASS",
+      "detail": "{\"d\":-30}",
+      "time": "2026-11-05T17:58:33.298Z"
+    },
+    {
+      "platform": "android",
+      "group": "B 3D 旋转",
+      "label": "B04 顶部旋转按钮 +30°",
+      "status": "PASS",
+      "detail": "{\"d\":30}",
+      "time": "2026-11-05T17:58:33.304Z"
+    },
+    {
+      "platform": "android",
+      "group": "B 3D 旋转",
+      "label": "B05 反向按钮 -30°",
+      "status": "PASS",
+      "detail": "{\"d\":-30}",
+      "time": "2026-11-05T17:58:33.306Z"
+    },
+    {
+      "platform": "android",
+      "group": "B 3D 旋转",
+      "label": "B06 移动端胶囊旋转 +30°",
+      "status": "PASS",
+      "detail": "{\"d\":30}",
+      "time": "2026-11-05T17:58:33.311Z"
+    },
+    {
+      "platform": "android",
+      "group": "B 3D 旋转",
+      "label": "B07 键盘 ArrowRight +30°",
+      "status": "PASS",
+      "detail": "{\"d\":30}",
+      "time": "2026-11-05T17:58:33.324Z"
+    },
+    {
+      "platform": "android",
+      "group": "B 3D 旋转",
+      "label": "B08 拖拽轨道相机改变角度",
+      "status": "PASS",
+      "detail": "{\"d\":-36}",
+      "time": "2026-11-05T17:58:33.329Z"
+    },
+    {
+      "platform": "android",
+      "group": "B 3D 旋转",
+      "label": "B09 视角复位回到默认 30°",
+      "status": "PASS",
+      "detail": "{\"d\":30}",
+      "time": "2026-11-05T17:58:33.332Z"
+    },
+    {
+      "platform": "android",
+      "group": "B 3D 旋转",
+      "label": "B10 旋转后画面确实变化",
+      "status": "PASS",
+      "detail": "{\"var\":24.514,\"mean\":30.65,\"size\":[320,616],\"diff\":0.924}",
+      "time": "2026-11-05T17:58:35.865Z"
+    },
+    {
+      "platform": "android",
+      "group": "B 3D 旋转",
+      "label": "B11 角度读数与状态同步",
+      "status": "PASS",
+      "detail": "{\"yaw\":\"120°\",\"t\":120}",
+      "time": "2026-11-05T17:58:36.794Z"
+    },
+    {
+      "platform": "android",
+      "group": "B 3D 旋转",
+      "label": "B12 自动旋转开关",
+      "status": "PASS",
+      "detail": "{\"on\":true,\"off\":false}",
+      "time": "2026-11-05T17:58:36.860Z"
+    },
+    {
+      "platform": "android",
+      "group": "C 图表与拟合",
+      "label": "C01 图表开关 off/on",
+      "status": "PASS",
+      "detail": "{\"a\":true,\"b\":false,\"cls\":true,\"c\":true}",
+      "time": "2026-11-05T17:58:36.894Z"
+    },
+    {
+      "platform": "android",
+      "group": "C 图表与拟合",
+      "label": "C02 曲线编辑器按钮切换图表",
+      "status": "PASS",
+      "detail": "{\"a\":true,\"b\":false}",
+      "time": "2026-11-05T17:58:36.927Z"
+    },
+    {
+      "platform": "android",
+      "group": "C 图表与拟合",
+      "label": "C03 底部胶囊图表按钮",
+      "status": "PASS",
+      "detail": "{\"a\":true,\"b\":false}",
+      "time": "2026-11-05T17:58:36.962Z"
+    },
+    {
+      "platform": "android",
+      "group": "C 图表与拟合",
+      "label": "C04 快捷键 C 切换图表",
+      "status": "PASS",
+      "detail": "{\"a\":true,\"b\":false}",
+      "time": "2026-11-05T17:58:36.993Z"
+    },
+    {
+      "platform": "android",
+      "group": "C 图表与拟合",
+      "label": "C05 平滑拟合开关与拟合度",
+      "status": "PASS",
+      "detail": "{\"a\":{\"s\":true,\"amt\":0.85,\"mode\":\"平滑\",\"pct\":\"85%\"},\"b\":false}",
+      "time": "2026-11-05T17:58:37.027Z"
+    },
+    {
+      "platform": "android",
+      "group": "C 图表与拟合",
+      "label": "C06 拟合度滑块生效",
+      "status": "PASS",
+      "detail": "{\"amt\":0.3,\"pct\":\"30%\"}",
+      "time": "2026-11-05T17:58:37.062Z"
+    },
+    {
+      "platform": "android",
+      "group": "C 图表与拟合",
+      "label": "C07 快捷键 S 切换平滑",
+      "status": "PASS",
+      "detail": "{\"a\":true,\"b\":false}",
+      "time": "2026-11-05T17:58:37.098Z"
+    },
+    {
+      "platform": "android",
+      "group": "D 数据与播放",
+      "label": "D01 update() 25 点数据生效",
+      "status": "PASS",
+      "detail": "{\"rain\":\"5.9\"}",
+      "time": "2026-11-05T17:58:37.128Z"
+    },
+    {
+      "platform": "android",
+      "group": "D 数据与播放",
+      "label": "D02 非法长度数据被拒绝且不崩溃",
+      "status": "PASS",
+      "detail": "{\"ok\":true}",
+      "time": "2026-11-05T17:58:37.730Z"
+    },
+    {
+      "platform": "android",
+      "group": "D 数据与播放",
+      "label": "D03 时间轴 setTime 生效",
+      "status": "PASS",
+      "detail": "{\"t\":12,\"tv\":\"12:00\"}",
+      "time": "2026-11-05T17:58:37.797Z"
+    },
+    {
+      "platform": "android",
+      "group": "D 数据与播放",
+      "label": "D04 播放/暂停切换",
+      "status": "PASS",
+      "detail": "{\"a\":true,\"b\":false,\"c\":true}",
+      "time": "2026-11-05T17:58:37.827Z"
+    },
+    {
+      "platform": "android",
+      "group": "D 数据与播放",
+      "label": "D05 四档画质均可切换",
+      "status": "PASS",
+      "detail": "[[0,\"低\"],[1,\"中\"],[2,\"高\"],[3,\"极致\"]]",
+      "time": "2026-11-05T17:58:37.860Z"
+    },
+    {
+      "platform": "android",
+      "group": "D 数据与播放",
+      "label": "D06 数据预设切换",
+      "status": "PASS",
+      "detail": "{\"name\":\"drizzle\"}",
+      "time": "2026-11-05T17:58:37.895Z"
+    },
+    {
+      "platform": "android",
+      "group": "D 数据与播放",
+      "label": "D07 雨声动态映射可用",
+      "status": "PASS",
+      "detail": "{\"a\":{\"n\":0.025,\"soft\":0.001890157590832637,\"hard\":0.00020666266235924033,\"bright\":0.043475942667556236},\"b\":{\"n\":0.9,\"soft\":0.836011527916834,\"hard\":0.7847977905697834,\"bright\":0.9143366600529774}}",
+      "time": "2026-11-05T17:58:37.931Z"
+    },
+    {
+      "platform": "android",
+      "group": "E UI 交互",
+      "label": "E01 面板收起/展开状态同步",
+      "status": "PASS",
+      "detail": "{\"a\":{\"s\":true,\"c\":true,\"f\":\"true\"},\"b\":false}",
+      "time": "2026-11-05T17:58:37.960Z"
+    },
+    {
+      "platform": "android",
+      "group": "E UI 交互",
+      "label": "E02 顶部按钮与 FAB 状态一致",
+      "status": "PASS",
+      "detail": "{\"a\":true,\"b\":false}",
+      "time": "2026-11-05T17:58:38.030Z"
+    },
+    {
+      "platform": "android",
+      "group": "E UI 交互",
+      "label": "E03 中英双语切换",
+      "status": "PASS",
+      "detail": "{\"a\":\"zh\",\"b\":\"en\",\"btn\":\"中\"}",
+      "time": "2026-11-05T17:58:38.061Z"
+    },
+    {
+      "platform": "android",
+      "group": "E UI 交互",
+      "label": "E04 壁纸模式开关",
+      "status": "PASS",
+      "detail": "{\"a\":true,\"b\":false}",
+      "time": "2026-11-05T17:58:38.116Z"
+    },
+    {
+      "platform": "android",
+      "group": "E UI 交互",
+      "label": "E05 截图触发",
+      "status": "PASS",
+      "detail": "{\"shot\":true}",
+      "time": "2026-11-05T17:58:38.279Z"
+    },
+    {
+      "platform": "android",
+      "group": "E UI 交互",
+      "label": "E06 天气抽屉开/关",
+      "status": "PASS",
+      "detail": "{\"a\":true,\"b\":false}",
+      "time": "2026-11-05T17:58:38.320Z"
+    },
+    {
+      "platform": "android",
+      "group": "E UI 交互",
+      "label": "E07 声音开关",
+      "status": "PASS",
+      "detail": "{\"cls\":\"\"}",
+      "time": "2026-11-05T17:58:38.358Z"
+    },
+    {
+      "platform": "android",
+      "group": "F 实时天气",
+      "label": "F01 数据源 >= 11 种",
+      "status": "PASS",
+      "detail": "",
+      "time": "2026-11-05T17:58:38.379Z"
+    },
+    {
+      "platform": "android",
+      "group": "F 实时天气",
+      "label": "F02 REST /api/weather 实时",
+      "status": "PASS",
+      "detail": "{\"status\":\"live\",\"src\":\"offline-sample\",\"n\":25,\"err\":null}",
+      "time": "2026-11-05T17:58:41.077Z"
+    },
+    {
+      "platform": "android",
+      "group": "F 实时天气",
+      "label": "F03 爬虫 /api/crawl 实时",
+      "status": "PASS",
+      "detail": "{\"status\":\"live\",\"src\":\"offline-sample\",\"n\":25,\"err\":null}",
+      "time": "2026-11-05T17:58:43.744Z"
+    },
+    {
+      "platform": "android",
+      "group": "F 实时天气",
+      "label": "F04 SSE /api/stream 实时",
+      "status": "PASS",
+      "detail": "{\"status\":\"live\",\"src\":\"offline-sample\",\"n\":25,\"err\":null}",
+      "time": "2026-11-05T17:58:46.411Z"
+    },
+    {
+      "platform": "android",
+      "group": "F 实时天气",
+      "label": "F05 WebSocket /ws 实时",
+      "status": "PASS",
+      "detail": "{\"status\":\"live\",\"src\":\"offline-sample\",\"n\":25,\"err\":null}",
+      "time": "2026-11-05T17:58:49.107Z"
+    },
+    {
+      "platform": "android",
+      "group": "F 实时天气",
+      "label": "F06 自定义 HTTP + valuePath 映射",
+      "status": "PASS",
+      "detail": "{\"status\":\"live\",\"src\":\"offline-sample\",\"n\":25,\"err\":null}",
+      "time": "2026-11-05T17:58:51.779Z"
+    },
+    {
+      "platform": "android",
+      "group": "F 实时天气",
+      "label": "F07 CSV 导入 25 点归一化",
+      "status": "PASS",
+      "detail": "{\"n\":25,\"v0\":2.4,\"v1\":0.1,\"h\":25}",
+      "time": "2026-11-05T17:58:51.787Z"
+    },
+    {
+      "platform": "android",
+      "group": "F 实时天气",
+      "label": "F08 JSON 对象导入",
+      "status": "PASS",
+      "detail": "{\"n\":25,\"v0\":1.2}",
+      "time": "2026-11-05T17:58:51.791Z"
+    },
+    {
+      "platform": "android",
+      "group": "F 实时天气",
+      "label": "F09 死端点降级链不黑屏",
+      "status": "PASS",
+      "detail": "{\"status\":\"stale\",\"n\":25}",
+      "time": "2026-11-05T17:58:55.060Z"
+    },
+    {
+      "platform": "android",
+      "group": "F 实时天气",
+      "label": "F10 register() 运行时注册数据源",
+      "status": "PASS",
+      "detail": "{\"status\":\"live\",\"n\":25}",
+      "time": "2026-11-05T17:58:56.294Z"
+    },
+    {
+      "platform": "android",
+      "group": "F 实时天气",
+      "label": "F11 状态 UI 角标/状态灯/曲线预览",
+      "status": "PASS",
+      "detail": "{\"badge\":\"LIVE\",\"txt\":\"实时\",\"dot\":\"w-dot w-live\",\"spark\":288}",
+      "time": "2026-11-05T17:58:56.329Z"
+    },
+    {
+      "platform": "android",
+      "group": "F 实时天气",
+      "label": "F12 导入非法数据不崩溃",
+      "status": "PASS",
+      "detail": "{\"ok\":true,\"handled\":\"Error: Precipitation array is empty\"}",
+      "time": "2026-11-05T17:58:56.361Z"
+    },
+    {
+      "platform": "android",
+      "group": "G 边界场景",
+      "label": "G01 极小视口 320x480 无溢出",
+      "status": "PASS",
+      "detail": "{\"w\":320,\"i\":320,\"app\":320,\"scene\":400}",
+      "time": "2026-11-05T17:58:56.711Z"
+    },
+    {
+      "platform": "android",
+      "group": "G 边界场景",
+      "label": "G02 手机竖屏 390x844 无溢出",
+      "status": "PASS",
+      "detail": "{\"w\":390,\"i\":390,\"app\":390,\"scene\":488}",
+      "time": "2026-11-05T17:58:57.061Z"
+    },
+    {
+      "platform": "android",
+      "group": "G 边界场景",
+      "label": "G03 横屏 844x390 无溢出",
+      "status": "PASS",
+      "detail": "{\"w\":844,\"i\":844,\"app\":844,\"scene\":1055}",
+      "time": "2026-11-05T17:58:57.387Z"
+    },
+    {
+      "platform": "android",
+      "group": "G 边界场景",
+      "label": "G04 超大视口 2560x1440 无溢出",
+      "status": "PASS",
+      "detail": "{\"w\":10240,\"i\":10240,\"app\":10240,\"scene\":1131}",
+      "time": "2026-11-05T17:58:57.851Z"
+    },
+    {
+      "platform": "android",
+      "group": "G 边界场景",
+      "label": "G05 横竖屏切换后 3D 仍可旋转",
+      "status": "PASS",
+      "detail": "{\"d\":30}",
+      "time": "2026-11-05T17:58:57.965Z"
+    },
+    {
+      "platform": "android",
+      "group": "G 边界场景",
+      "label": "G06 快速连点 20 次旋转不崩溃",
+      "status": "PASS",
+      "detail": "{\"ok\":true,\"t\":13.089969389957467}",
+      "time": "2026-11-05T17:58:58.079Z"
+    },
+    {
+      "platform": "android",
+      "group": "G 边界场景",
+      "label": "G07 极端数据（0 / 负值 / 超大值）",
+      "status": "PASS",
+      "detail": "{\"ok\":true,\"n\":25}",
+      "time": "2026-11-05T17:58:58.189Z"
+    },
+    {
+      "platform": "android",
+      "group": "G 边界场景",
+      "label": "G08 损坏的 localStorage 不阻断启动",
+      "status": "PASS",
+      "detail": "{\"ok\":true,\"cfg\":true}",
+      "time": "2026-11-05T17:58:58.421Z"
+    },
+    {
+      "platform": "android",
+      "group": "G 边界场景",
+      "label": "G09 断网时仍可回到演示数据",
+      "status": "PASS",
+      "detail": "{\"ok\":true,\"s\":\"idle\",\"n\":25}",
+      "time": "2026-11-05T17:58:58.544Z"
+    },
+    {
+      "platform": "android",
+      "group": "G 边界场景",
+      "label": "G10 全流程零 JS 异常",
+      "status": "PASS",
+      "detail": "[]",
+      "time": "2026-11-05T17:58:58.544Z"
+    },
+    {
+      "platform": "android",
+      "group": "H 平台差异",
+      "label": "H03 原生 HTTP 桥可用",
+      "status": "PASS",
+      "detail": "{\"platform\":\"android\",\"ok\":true,\"status\":200,\"body\":\"{\\\"ok\\\":true,\\\"service\\\":\\\"rainform-weather-gateway\\\",\\\"version\\\":\\\"1\"}",
+      "time": "2026-11-05T17:58:58.712Z"
+    },
+    {
+      "platform": "android",
+      "group": "H 平台差异",
+      "label": "H05 触控事件与安全区适配",
+      "status": "PASS",
+      "detail": "{\"touch\":true,\"vw\":2560,\"meta\":true}",
+      "time": "2026-11-05T17:58:58.824Z"
+    },
+    {
+      "platform": "android",
+      "group": "H 平台差异",
+      "label": "H01 PWA manifest 与 Service Worker",
+      "status": "SKIP",
+      "detail": "原生壳为内置页面，不适用",
+      "time": "2026-11-05T17:58:58.824Z"
+    }
+  ],
+  "defects": []
+}

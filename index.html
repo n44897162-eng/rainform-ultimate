@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#03070d">
+<meta name="description" content="Rainform Ultimate — 把逐时降雨数据变成一场真实的 3D 雨，支持接入实时天气数据。">
+<meta name="color-scheme" content="dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rainform">
+<meta name="format-detection" content="telephone=no">
+<title>如果降雨数据变成雨 · Rainform Ultimate</title>
+<!-- PWA manifest is injected into the installable copies by build-apps.js.
+     The standalone single-file edition deliberately has zero external refs. -->
+<link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+<div id="app">
+
+  <canvas id="scene"></canvas>
+  <div class="atmosphere"></div>
+  <div class="grain"></div>
+
+  <!-- boot / error -->
+  <div id="loader">
+    <div class="loader-inner">
+      <div class="loader-ring"></div>
+      <div class="loader-title">RAINFORM <span>ULTIMATE</span></div>
+      <div class="loader-sub" id="loaderSub">正在生成雨幕…</div>
+    </div>
+  </div>
+  <div id="webglError">
+    <div class="err-card">
+      <h2>无法启动 WebGL</h2>
+      <p>这个版本需要浏览器的 WebGL 支持。请更新浏览器、开启硬件加速，或改用归档里的 Canvas 2D 版本。</p>
+      <a href="archive/rainfall-as-rain-realistic.html">打开 Canvas 2D 版本 →</a>
+    </div>
+  </div>
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="eyebrow"><span class="pulse"></span> VIBE CODING <span class="sep">/</span> DATA AS WEATHER
+        <span class="tag">WEBGL ULTIMATE</span></div>
+      <h1 data-zh="如果降雨数据变成雨" data-en="When Rainfall Data Becomes Rain">如果降雨数据变成雨</h1>
+      <p class="sub" data-zh="把 00:00 — 24:00 的 25 个逐时降雨数据点，变成一场可以走进去的雨"
+         data-en="25 hourly values, 00:00 to 24:00, turned into a rain you can walk into">把 00:00 — 24:00 的 25 个逐时降雨数据点，变成一场可以走进去的雨</p>
+      <div class="brand-actions">
+        <button id="panelToggle" class="panel-toggle">
+          <span class="pt-ico">⌄</span>
+          <span class="pt-hide" data-zh="收起下方面板" data-en="Hide panels">收起下方面板</span>
+          <span class="pt-show" data-zh="展开下方面板" data-en="Show panels">展开下方面板</span>
+        </button>
+        <button id="weatherOpen" class="panel-toggle weather-open" title="实时天气数据源 / Live data sources">
+          <span class="w-live-ico">◈</span>
+          <span data-zh="实时天气" data-en="Live weather">实时天气</span>
+          <span id="weatherBadge" class="w-badge">DEMO</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="readout glass">
+      <div class="readout-top">
+        <span class="label" data-zh="当前时刻 / TIME" data-en="CURRENT TIME">当前时刻 / TIME</span>
+        <span class="mono clock" id="timeValue">18:00</span>
+      </div>
+      <div class="readout-main">
+        <span class="mono big" id="rainValue">6.0</span>
+        <span class="unit">mm/h</span>
+        <span class="level" id="levelValue">中雨</span>
+      </div>
+      <div class="bar"><i id="rainBar"></i></div>
+      <div class="readout-meta">
+        <span><b id="dropValue">—</b> <em data-zh="雨丝" data-en="STRANDS">雨丝</em></span>
+        <span><b id="fpsValue">—</b> FPS</span>
+        <span><b id="qualityValue">—</b> <em data-zh="画质" data-en="QUALITY">画质</em></span>
+      </div>
+    </div>
+  </header>
+
+  <div class="axis-legend glass">
+    <span class="lg-title" data-zh="坐标 / AXES" data-en="AXES">坐标 / AXES</span>
+    <span><i class="sw x"></i> X <em data-zh="时间 00–24" data-en="TIME 00–24">时间 00–24</em></span>
+    <span><i class="sw y"></i> Y <em data-zh="雨强 mm/h" data-en="INTENSITY">雨强 mm/h</em></span>
+    <span><i class="sw z"></i> Z <em data-zh="雨幕深度" data-en="DEPTH">雨幕深度</em></span>
+  </div>
+
+  <aside class="controls glass">
+    <div class="ctl-section">
+      <div class="ctl-title"><span data-zh="视角" data-en="VIEW">视角</span><em id="viewMode">30° ISO</em></div>
+      <button id="rotateBtn" class="primary-btn"><span class="r-ico">⟳</span><span data-zh="旋转 30°" data-en="ROTATE 30°">旋转 30°</span></button>
+      <div class="btn-row">
+        <button id="rotateBack" class="ghost-btn"><span>−30°</span></button>
+        <button id="resetView" class="ghost-btn"><span data-zh="重置" data-en="RESET">重置</span></button>
+      </div>
+      <div class="angle-box">
+        <span><em data-zh="方位角" data-en="AZIMUTH">方位角</em> <b id="yawValue">30°</b></span>
+        <span><em data-zh="俯仰角" data-en="ELEVATION">俯仰角</em> <b id="pitchValue">30°</b></span>
+      </div>
+      <label class="switch" title="自动旋转 / Auto rotate"><input type="checkbox" id="autoRotate"><i></i><span data-zh="自动" data-en="Auto">自动</span></label>
+    </div>
+
+    <div class="ctl-section">
+      <div class="ctl-title"><span data-zh="画质" data-en="QUALITY">画质</span><em id="qualityHint">AUTO</em></div>
+      <div class="seg-btns" id="qualityBtns">
+        <button data-q="0">低</button><button data-q="1">中</button><button data-q="2">高</button><button data-q="3" class="active">极致</button>
+      </div>
+      <div class="hint" data-zh="影响雨丝数量与辉光" data-en="Strand count & bloom">影响雨丝数量与辉光</div>
+    </div>
+
+    <div class="ctl-section">
+      <div class="ctl-title"><span data-zh="数据预设" data-en="PRESETS">数据预设</span><em>mm/h</em></div>
+      <div class="preset-btns" id="presetBtns">
+        <button data-p="drizzle" data-zh="细雨" data-en="Drizzle">细雨</button>
+        <button data-p="shower" data-zh="阵雨" data-en="Shower">阵雨</button>
+        <button data-p="storm" data-zh="暴雨" data-en="Storm">暴雨</button>
+        <button data-p="random" data-zh="随机" data-en="Random">随机</button>
+      </div>
+    </div>
+
+    <div class="ctl-section ctl-curve">
+      <div class="ctl-title"><span data-zh="折线图" data-en="CHART">折线图</span><em id="curveMode">折线</em></div>
+      <div class="curve-btns">
+        <button id="curveBtn" class="active" aria-pressed="true">隐藏图表</button>
+        <button id="smoothBtn" aria-pressed="false">平滑拟合</button>
+      </div>
+      <div class="smooth-row">
+        <span data-zh="拟合度" data-en="FIT">拟合度</span>
+        <input id="smoothRange" type="range" min="0" max="100" value="85" aria-label="smooth fit amount">
+        <b id="smoothPct">85%</b>
+      </div>
+    </div>
+
+    <div class="ctl-section ctl-last">
+      <div class="btn-row">
+        <label class="switch" title="雨声 / Rain sound"><input type="checkbox" id="soundToggle"><i></i><span data-zh="雨声" data-en="Sound">雨声</span></label>
+        <button id="langBtn" class="ghost-btn small">EN</button>
+      </div>
+      <div class="btn-row">
+        <button id="wallpaperBtn" class="ghost-btn"><span data-zh="壁纸模式" data-en="Wallpaper">壁纸模式</span></button>
+        <button id="shotBtn" class="ghost-btn"><span data-zh="存图" data-en="Save PNG">存图</span></button>
+      </div>
+      <div class="hint keys" data-zh="← → 旋转 · 空格 播放 · H 面板 · C 图表 · S 平滑 · R 重置 · W 壁纸"
+           data-en="← → rotate · Space play · H panels · C chart · S smooth · R reset · W wallpaper">← → 旋转 · 空格 播放 · H 面板 · C 图表 · S 平滑 · R 重置 · W 壁纸</div>
+    </div>
+  </aside>
+
+  <section class="bottom glass">
+    <div class="bottom-head">
+      <div class="bh-left">
+        <span class="bh-title" data-zh="降雨曲线" data-en="RAINFALL CURVE">降雨曲线</span>
+        <span class="bh-sub" data-zh="拖动数据点改写这场雨" data-en="Drag the points to reshape the rain">拖动数据点改写这场雨</span>
+      </div>
+      <div class="bh-right" id="hoverInfo">—</div>
+    </div>
+    <canvas id="curve"></canvas>
+    <div class="transport">
+      <button id="playBtn" class="t-btn play"><span id="playIcon">❚❚</span><span id="playLabel" data-zh="暂停" data-en="Pause">暂停</span></button>
+      <button id="speedBtn" class="t-btn">1×</button>
+      <button id="resetData" class="t-btn" data-zh="还原数据" data-en="Reset data">还原数据</button>
+      <div class="t-time"><span class="mono" id="axisNow">18:00</span><span class="t-track"><i id="timeTrack"></i></span></div>
+    </div>
+  </section>
+
+  <button id="fabToggle" aria-pressed="false" title="显示 / 隐藏面板">
+    <span class="fab-disc">
+      <svg class="fab-hide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 15h18M9 15v6"/></svg>
+      <svg class="fab-show" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 9v-6"/></svg>
+    </span>
+    <span class="fab-label"><span class="fab-hide" data-zh="隐藏面板" data-en="Hide">隐藏面板</span><span class="fab-show" data-zh="显示面板" data-en="Show">显示面板</span></span>
+  </button>
+
+  <div id="miniBar">
+    <button id="miniRotate"><span class="m-ico">⟳</span> 30°</button>
+    <span class="mini-sep"></span>
+    <button id="miniPlay"><span id="miniPlayIcon">❚❚</span></button>
+    <span class="mini-sep"></span>
+    <button id="miniChart" class="active"><span class="m-ico">⌁</span><span data-zh="图表" data-en="Chart">图表</span></button>
+    <span class="mini-sep"></span>
+    <button id="miniWeather" class="w-mini-only" title="实时天气 / Live weather"><span class="m-ico">◈</span></button>
+    <span class="mini-sep"></span>
+    <button id="miniShow"><span data-zh="显示面板" data-en="Panels">显示面板</span><span class="m-ico up">⌃</span></button>
+  </div>
+
+  <div class="footer">
+    <span data-zh="灵感来自 afterimage-lab《Rainform / 数据成雨》 · 独立实现 · 实时数据接口 RainWeather v1（多数据源 / 可插拔） · 落地水花形态参考冠冕飞溅物理研究与开源 VFX 实践"
+          data-en="Inspired by afterimage-lab Rainform · Independent implementation · RainWeather v1 pluggable live-data bridge · Splash morphology after crown-splash research and open VFX practice">灵感来自 afterimage-lab《Rainform / 数据成雨》 · 独立实现 · 实时数据接口 RainWeather v1（多数据源 / 可插拔） · 落地水花形态参考冠冕飞溅物理研究与开源 VFX 实践</span>
+  </div>
+
+  <div id="toast"></div>
+
+  <!-- ============================ Live weather drawer ============================ -->
+  <div id="weatherMask"></div>
+  <aside id="weatherPanel" class="weather-drawer glass" aria-hidden="true" aria-label="实时天气数据源">
+    <div class="w-head">
+      <div>
+        <div class="w-eyebrow">RAINWEATHER <span>v1</span> / LIVE DATA BRIDGE</div>
+        <h2 data-zh="实时天气数据源" data-en="Live weather sources">实时天气数据源</h2>
+      </div>
+      <button id="weatherClose" class="w-x" aria-label="Close">✕</button>
+    </div>
+
+    <div class="w-status" id="weatherStatus">
+      <span id="weatherDot" class="w-dot w-idle"></span>
+      <div class="w-status-main">
+        <b id="weatherStatusText">待机</b>
+        <span id="weatherSrc">内置演示数据</span>
+      </div>
+      <div class="w-status-side">
+        <em id="weatherLoc">上海</em>
+        <em id="weatherUpdated">—</em>
+      </div>
+    </div>
+    <canvas id="weatherSpark"></canvas>
+    <div id="weatherError" class="w-error"></div>
+
+    <div class="w-scroll">
+      <label class="w-field" data-when="always">
+        <span data-zh="数据源 / SOURCE" data-en="SOURCE">数据源 / SOURCE</span>
+        <select id="weatherProvider"></select>
+      </label>
+      <div id="weatherHint" class="w-hint"></div>
+
+      <div class="w-sub" data-when="always"><span data-zh="地区" data-en="LOCATION">地区</span><i></i></div>
+      <div class="w-grid" data-when="always">
+        <label class="w-field"><span data-zh="城市" data-en="CITY">城市</span><input id="weatherCity" placeholder="上海 / Shanghai" autocomplete="off"></label>
+        <label class="w-field"><span>LAT</span><input id="weatherLat" inputmode="decimal" placeholder="31.2304"></label>
+        <label class="w-field"><span>LON</span><input id="weatherLon" inputmode="decimal" placeholder="121.4737"></label>
+      </div>
+      <div class="w-row" data-when="always">
+        <button id="weatherSearch" class="w-btn" data-zh="按城市名查找经纬度" data-en="Geocode city">按城市名查找经纬度</button>
+        <button id="weatherLocate" class="w-btn" data-zh="使用设备定位" data-en="Use GPS">使用设备定位</button>
+      </div>
+
+      <div class="w-sub" data-when="server"><span data-zh="自建服务器" data-en="YOUR SERVER">自建服务器</span><i></i></div>
+      <label class="w-field" data-when="server"><span data-zh="服务器地址 / REST · SSE · WS · 爬虫" data-en="SERVER URL / REST · SSE · WS · CRAWLER">服务器地址 / REST · SSE · WS · 爬虫</span>
+        <input id="weatherServer" placeholder="http://127.0.0.1:8787" inputmode="url" spellcheck="false"></label>
+      <label class="w-field" data-when="server"><span data-zh="访问令牌（可选）" data-en="BEARER TOKEN (optional)">访问令牌（可选）</span>
+        <input id="weatherToken" placeholder="token" autocomplete="off"></label>
+
+      <div class="w-sub" data-when="url"><span data-zh="自定义接口" data-en="CUSTOM ENDPOINT">自定义接口</span><i></i></div>
+      <label class="w-field" data-when="url"><span data-zh="接口 URL / MQTT over WS 地址" data-en="ENDPOINT URL / MQTT BROKER">接口 URL / MQTT over WS 地址</span>
+        <input id="weatherUrl" placeholder="https://your-api.example/hourly.json" inputmode="url" spellcheck="false"></label>
+
+      <div class="w-sub" data-when="key"><span data-zh="商业 API 凭据" data-en="API CREDENTIALS">商业 API 凭据</span><i></i></div>
+      <label class="w-field" data-when="key"><span>API KEY</span><input id="weatherKey" placeholder="your-api-key" autocomplete="off"></label>
+      <label class="w-field" data-when="key,host"><span>API HOST</span><input id="weatherHost" placeholder="api.qweather.com" spellcheck="false"></label>
+
+      <div class="w-sub" data-when="always"><span data-zh="调度" data-en="SCHEDULE">调度</span><i></i></div>
+      <div class="w-grid w-grid-2" data-when="always">
+        <label class="w-field"><span data-zh="刷新间隔（分钟）" data-en="REFRESH (min)">刷新间隔（分钟）</span>
+          <input id="weatherInterval" type="number" min="1" max="1440" value="10"></label>
+        <label class="w-field"><span data-zh="数据时间对齐" data-en="TIME ALIGN">数据时间对齐</span>
+          <select id="weatherAlign"><option value="day">00–24 全天</option><option value="now">滚动 25 小时</option></select></label>
+      </div>
+      <div class="w-switches" data-when="always">
+        <label class="switch"><input type="checkbox" id="weatherAuto"><i></i>
+          <span data-zh="启动时自动连接" data-en="Auto-connect on start">启动时自动连接</span></label>
+        <label class="switch"><input type="checkbox" id="weatherNative"><i></i>
+          <span data-zh="优先原生网络（绕过 CORS）" data-en="Prefer native HTTP">优先原生网络（绕过 CORS）</span></label>
+      </div>
+
+      <details class="w-advanced">
+        <summary data-zh="高级：任意 JSON 字段映射 / 请求头 / MQTT" data-en="Advanced: JSON mapping / headers / MQTT">高级：任意 JSON 字段映射 / 请求头 / MQTT</summary>
+        <div class="w-grid w-grid-2">
+          <label class="w-field"><span>valuePath</span><input id="weatherValuePath" placeholder="data.hourly.rain" spellcheck="false"></label>
+          <label class="w-field"><span>timePath</span><input id="weatherTimePath" placeholder="data.hourly.time" spellcheck="false"></label>
+          <label class="w-field"><span data-zh="倍率 scale" data-en="SCALE">倍率 scale</span><input id="weatherScale" value="1" inputmode="decimal"></label>
+          <label class="w-field"><span data-zh="自定义请求头（每行 K: V）" data-en="EXTRA HEADERS">自定义请求头（每行 K: V）</span><input id="weatherExtraHeaders" placeholder="X-Api-Key: abc" spellcheck="false"></label>
+          <label class="w-field"><span>MQTT URL</span><input id="weatherMqttUrl" placeholder="wss://broker:8884/mqtt" spellcheck="false"></label>
+          <label class="w-field"><span>MQTT TOPIC</span><input id="weatherTopic" placeholder="rainform/weather" spellcheck="false"></label>
+        </div>
+        <p class="w-note" data-zh="valuePath 指向任意 JSON 数组（或对象）；留空则自动识别 common 字段。也可在控制台用 RainWeather.register(id, def) 注册全新数据源。" data-en="valuePath points at any JSON array; leave blank for auto-detection. Register entirely new transports with RainWeather.register(id, def).">valuePath 指向任意 JSON 数组（或对象）；留空则自动识别 common 字段。也可在控制台用 RainWeather.register(id, def) 注册全新数据源。</p>
+      </details>
+    </div>
+
+    <div class="w-actions">
+      <button id="weatherRefresh" class="w-btn primary" data-zh="立即拉取" data-en="Fetch now">立即拉取</button>
+      <button id="weatherStop" class="w-btn" data-zh="停止" data-en="Stop">停止</button>
+      <button id="weatherDemo" class="w-btn" data-zh="演示数据" data-en="Demo">演示数据</button>
+    </div>
+    <div class="w-actions w-actions-2">
+      <label class="w-btn file"><span data-zh="导入 JSON / CSV" data-en="Import JSON / CSV">导入 JSON / CSV</span>
+        <input type="file" id="weatherFile" accept=".json,.csv,.txt,application/json,text/csv" hidden></label>
+      <button id="weatherCopy" class="w-btn" data-zh="复制当前数据" data-en="Copy JSON">复制当前数据</button>
+      <button id="weatherLogToggle" class="w-btn" data-zh="日志" data-en="Log">日志</button>
+    </div>
+    <div id="weatherLog" class="w-log" data-open="0"></div>
+  </aside>
+</div>
+
+<script src="vendor/three.min.js"></script>
+<script src="src/shaders.js"></script>
+<script src="src/audio.js"></script>
+<script src="src/weather.js"></script>
+<script src="src/app.js"></script>
+</body>
+</html>

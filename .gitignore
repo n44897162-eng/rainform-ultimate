@@ -1,0 +1,44 @@
+# dependencies
+node_modules/
+*/node_modules/
+**/node_modules/
+
+# build caches / toolchains downloaded at build time
+tools/.nsis/pkg/
+tools/.nsis/*.7z
+tools/.win-stage/
+app/android-native/build/
+app/android-native/.gradle/
+app/desktop/dist/
+app/mobile/android/
+app/mobile/ios/
+
+# generated app bundles (rebuild with node build-standalone.js / build-apps.js)
+# note: Rainform-Ultimate-standalone.html IS committed as the ready-to-run demo
+app/pwa/index.html
+app/desktop/www/
+app/mobile/www/
+
+# deliverables (rebuild with the commands in README)
+dist/
+
+# test artifacts
+tests/.win-install*/
+tests/.win-smoke*/
+tests/evidence/
+previews/
+*.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# local helper / archive preview images (keep repo lean)
+.upload-manifest.json
+archive/preview-*.png
+
+# local tooling
+.upload-manifest.json
+tools/.gh/

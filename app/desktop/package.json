@@ -1,0 +1,63 @@
+{
+  "name": "rainform-ultimate",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Rainform Ultimate — 逐时降雨数据 3D 雨景桌面应用，支持实时天气数据",
+  "main": "main.js",
+  "author": "Rainform",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "start:live": "electron . --weather=server --weather-server=http://127.0.0.1:8787 --weather-auto",
+    "dist": "electron-builder",
+    "dist:win": "electron-builder --win --x64",
+    "dist:mac": "electron-builder --mac",
+    "dist:linux": "electron-builder --linux",
+    "pack": "electron-builder --dir"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "cn.rainform.ultimate",
+    "productName": "Rainform Ultimate",
+    "copyright": "Rainform Ultimate · independent implementation",
+    "directories": {
+      "output": "dist",
+      "buildResources": "icons"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "www/**/*",
+      "icons/**/*"
+    ],
+    "asar": true,
+    "win": {
+      "target": ["nsis", "portable"],
+      "icon": "icons/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "artifactName": "Rainform-Ultimate-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "Rainform-Ultimate-Portable-${version}.${ext}"
+    },
+    "mac": {
+      "target": ["dmg", "zip"],
+      "icon": "icons/icon.png",
+      "category": "public.app-category.weather",
+      "darkModeSupport": true
+    },
+    "linux": {
+      "target": ["AppImage"],
+      "icon": "icons/icon.png",
+      "category": "Graphics;Education;Science"
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "schema": "rainform.weather/1",
+  "source": "sample-offline",
+  "mode": "live",
+  "location": {
+    "name": "示例站点 / Sample station",
+    "lat": 31.2304,
+    "lon": 121.4737,
+    "timezone": "Asia/Shanghai"
+  },
+  "observedAt": "2026-11-05T08:00:00+08:00",
+  "fetchedAt": "2026-11-05T08:00:00+08:00",
+  "unit": "mm/h",
+  "hours": [],
+  "values": [0.6, 0.4, 0.3, 0.5, 0.8, 1.4, 2.2, 3.1, 2.6, 3.8, 5.2, 7.4, 9.6, 6.8, 4.6, 5.9, 8.8, 12.4, 15.6, 13.2, 10.1, 7.2, 4.4, 2.5, 1.2],
+  "meta": {
+    "gateway": "rainform-weather-gateway/1.0",
+    "note": "Bundled offline sample; used with --offline or when the upstream is unreachable."
+  }
+}

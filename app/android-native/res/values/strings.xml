@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Rainform</string>
+    <string name="app_name_long">如果降雨数据变成雨</string>
+</resources>

@@ -1,0 +1,30 @@
+{
+  "_comment": "Reference only. The server reads CLI args / env; see README.md. Use POST /api/config to change intervalMs, upstreamMs, provider at runtime.",
+  "port": 8787,
+  "host": "0.0.0.0",
+  "root": "app/pwa",
+  "token": "",
+  "intervalMs": 30000,
+  "upstreamMs": 12000,
+  "provider": "open-meteo",
+  "crawlSource": "crawler",
+  "offline": false,
+  "verbose": true,
+
+  "_upstreamExamples": {
+    "official": "https://api.open-meteo.com/v1/forecast?latitude=31.23&longitude=121.47&hourly=precipitation",
+    "licensed": "https://api.qweather.com/v7/weather/24h?location=121.47,31.23&key=YOUR_KEY",
+    "ownApi": "https://your-server.example/api/hourly?city=Shanghai",
+    "database": "implement providers/my-station.js",
+    "mqttBridge": "POST normalized frames to /api/push"
+  },
+
+  "_browserEquivalent": {
+    "provider": "server | crawler | sse | ws | custom | openmeteo | qweather | openweather | mqtt | demo | manual",
+    "server": "http://127.0.0.1:8787",
+    "restPath": "/api/weather",
+    "crawlPath": "/api/crawl",
+    "streamPath": "/api/stream",
+    "wsPath": "/ws"
+  }
+}

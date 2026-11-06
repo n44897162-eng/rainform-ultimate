@@ -1,0 +1,15 @@
+{
+  "name": "rainform-ultimate-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Rainform Ultimate 三端一致性 / 主要流程 / 边界场景 / 平台差异自动化测试",
+  "scripts": {
+    "test": "node run.js",
+    "test:web": "node run.js --platform=web",
+    "test:win": "node run.js --platform=win",
+    "test:android": "node run.js --platform=android"
+  },
+  "dependencies": {
+    "playwright-core": "1.64.1"
+  }
+}

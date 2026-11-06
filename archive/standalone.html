@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#050a12">
+<meta name="description" content="把逐时降雨数据变成一场可以旋转、可以编辑、可以聆听的实时粒子雨。">
+<title>如果降雨数据变成雨 · Rainfall as Rain</title>
+<style>
+:root {
+  --bg: #050a12;
+  --ink: #e6f2ff;
+  --muted: rgba(178, 207, 236, 0.55);
+  --faint: rgba(150, 190, 230, 0.32);
+  --line: rgba(140, 195, 255, 0.14);
+  --cyan: #8fd3ff;
+  --blue: #4ea8ff;
+  --glass: rgba(9, 19, 32, 0.55);
+  --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  --sans: Inter, system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+#app { position: relative; width: 100%; height: 100%; overflow: hidden; }
+
+#scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; }
+#scene.dragging { cursor: grabbing; }
+
+.atmosphere {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(120% 80% at 50% 18%, rgba(48, 108, 178, 0.13), transparent 62%),
+    radial-gradient(90% 70% at 50% 105%, rgba(10, 40, 76, 0.35), transparent 70%),
+    linear-gradient(180deg, rgba(4, 8, 15, 0.28) 0%, transparent 26%, transparent 72%, rgba(3, 7, 13, 0.55) 100%);
+}
+
+.glass {
+  background: var(--glass);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  backdrop-filter: blur(16px) saturate(120%);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(190, 225, 255, 0.05);
+}
+
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+/* ---------- header ---------- */
+.topbar {
+  position: absolute; top: 0; left: 0; right: 0;
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 24px; padding: 28px 34px 0;
+  pointer-events: none;
+}
+.topbar > * { pointer-events: auto; }
+.brand { max-width: 620px; }
+.eyebrow {
+  display: flex; align-items: center; gap: 9px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.22em;
+  color: rgba(143, 211, 255, 0.75); text-transform: uppercase;
+}
+.eyebrow .dot {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--cyan);
+  box-shadow: 0 0 12px 3px rgba(143, 211, 255, 0.7);
+  animation: pulse 2.6s ease-in-out infinite;
+}
+@keyframes pulse { 50% { opacity: 0.35; } }
+.eyebrow .sep { opacity: 0.4; }
+.brand h1 {
+  margin: 14px 0 8px; font-size: clamp(24px, 2.7vw, 40px); font-weight: 300;
+  letter-spacing: 0.06em; line-height: 1.15;
+  text-shadow: 0 0 34px rgba(110, 190, 255, 0.28);
+}
+.brand .sub { margin: 0; font-size: 12px; color: var(--muted); letter-spacing: 0.04em; line-height: 1.7; }
+
+.readout { width: 258px; padding: 16px 18px 14px; flex: none; }
+.readout-top { display: flex; align-items: baseline; justify-content: space-between; }
+.label { font-size: 9px; letter-spacing: 0.16em; color: var(--faint); text-transform: uppercase; }
+.clock { font-size: 15px; color: rgba(215, 238, 255, 0.9); letter-spacing: 0.06em; }
+.intensity-line { display: flex; align-items: baseline; gap: 8px; margin-top: 6px; }
+.huge {
+  font-size: 46px; font-weight: 300; line-height: 1.05; letter-spacing: -0.03em;
+  color: #d5ecff; text-shadow: 0 0 28px rgba(90, 180, 255, 0.45);
+}
+.unit { font-size: 11px; color: var(--muted); }
+.bar { height: 3px; border-radius: 3px; background: rgba(130, 190, 255, 0.12); margin: 12px 0 10px; overflow: hidden; }
+.bar i {
+  display: block; height: 100%; width: 50%; border-radius: 3px;
+  background: linear-gradient(90deg, #4ea8ff, #a6e5ff);
+  box-shadow: 0 0 12px rgba(120, 200, 255, 0.8);
+  transition: width 0.25s ease;
+}
+.readout-meta { display: flex; justify-content: space-between; gap: 8px; font-size: 9px; color: var(--faint); font-family: var(--mono); }
+.readout-meta .level { color: var(--cyan); }
+
+/* ---------- legend ---------- */
+.axis-legend {
+  position: absolute; left: 34px; top: 150px;
+  display: flex; align-items: center; gap: 16px;
+  padding: 9px 14px; font-size: 10px; color: var(--muted);
+  letter-spacing: 0.03em; white-space: nowrap;
+}
+.legend-title { font-family: var(--mono); font-size: 9px; letter-spacing: 0.18em; color: var(--faint); margin: 0 2px 0 0; }
+.axis-legend > div:not(.legend-title) { display: flex; align-items: center; gap: 8px; }
+.swatch { width: 12px; height: 2px; flex: none; border-radius: 2px; }
+.swatch.x { background: #7fd0ff; }
+.swatch.y { background: #a7e9c8; }
+.swatch.z { background: #b8a7ff; }
+
+/* ---------- controls ---------- */
+.controls { position: absolute; right: 34px; top: 47%; transform: translateY(-50%); width: 208px; padding: 16px; }
+.ctrl-title { font-family: var(--mono); font-size: 9px; letter-spacing: 0.18em; color: var(--faint); margin-bottom: 12px; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; padding: 9px 10px; border-radius: 9px;
+  border: 1px solid rgba(140, 195, 255, 0.18);
+  background: rgba(120, 185, 255, 0.05); color: rgba(220, 240, 255, 0.82);
+  font-family: var(--sans); font-size: 11px; letter-spacing: 0.04em;
+  cursor: pointer; transition: all 0.18s ease;
+}
+.btn:hover { background: rgba(120, 190, 255, 0.14); border-color: rgba(160, 215, 255, 0.42); color: #fff; }
+.btn:active { transform: scale(0.97); }
+.btn.primary {
+  padding: 12px 10px; font-size: 13px; font-weight: 500;
+  color: #e9f7ff; border-color: rgba(143, 211, 255, 0.5);
+  background: linear-gradient(135deg, rgba(78, 168, 255, 0.26), rgba(143, 211, 255, 0.09));
+  box-shadow: 0 0 22px rgba(78, 168, 255, 0.16), inset 0 1px 0 rgba(200, 235, 255, 0.16);
+}
+.btn.primary:hover { box-shadow: 0 0 30px rgba(78, 168, 255, 0.34); background: linear-gradient(135deg, rgba(78, 168, 255, 0.38), rgba(143, 211, 255, 0.14)); }
+.btn.primary .icon { font-size: 18px; line-height: 1; }
+.btn-row { display: flex; gap: 8px; margin-top: 8px; }
+.btn-row .btn { font-family: var(--mono); font-size: 10px; padding: 8px 4px; }
+.angle-box { margin-top: 14px; display: grid; gap: 7px; font-size: 10px; color: var(--muted); }
+.angle-box > div { display: flex; justify-content: space-between; align-items: baseline; }
+.angle-box strong { font-size: 13px; color: var(--cyan); font-weight: 400; }
+.divider { height: 1px; background: var(--line); margin: 14px 0 12px; }
+.switch { display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--muted); cursor: pointer; padding: 5px 0; }
+.switch input { display: none; }
+.track { position: relative; width: 30px; height: 16px; border-radius: 10px; background: rgba(140, 190, 240, 0.16); border: 1px solid var(--line); transition: 0.2s; flex: none; }
+.track::after { content: ""; position: absolute; top: 2px; left: 2px; width: 10px; height: 10px; border-radius: 50%; background: rgba(190, 220, 250, 0.6); transition: 0.2s; }
+.switch input:checked + .track { background: rgba(78, 168, 255, 0.45); border-color: rgba(143, 211, 255, 0.6); }
+.switch input:checked + .track::after { transform: translateX(14px); background: #eaf7ff; }
+.lang { margin-top: 10px; width: 100%; padding: 7px; border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--faint); font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; cursor: pointer; transition: 0.2s; }
+.lang:hover { color: var(--cyan); border-color: rgba(143, 211, 255, 0.4); }
+
+/* ---------- bottom ---------- */
+.bottom { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 34px 18px; pointer-events: none; }
+.bottom > * { pointer-events: auto; }
+.curve-panel { padding: 12px 16px 8px; }
+.curve-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 4px; }
+.curve-title { font-size: 10px; letter-spacing: 0.1em; color: var(--muted); }
+.transport { display: flex; gap: 7px; }
+.btn.sm { width: auto; padding: 5px 11px; font-size: 10px; border-radius: 7px; white-space: nowrap; }
+#curve { display: block; width: 100%; height: 96px; cursor: crosshair; }
+.tips { display: flex; justify-content: center; gap: 10px; margin-top: 10px; font-size: 10px; color: var(--faint); letter-spacing: 0.05em; }
+.tips b { opacity: 0.4; font-weight: 400; }
+.credit { text-align: center; margin-top: 6px; font-size: 9px; color: rgba(140, 175, 210, 0.28); letter-spacing: 0.03em; }
+
+/* ---------- gate ---------- */
+#portraitGate {
+  display: none; position: absolute; inset: 0; z-index: 50;
+  background: rgba(4, 9, 16, 0.94); backdrop-filter: blur(20px);
+  flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  font-size: 15px; letter-spacing: 0.06em;
+}
+#portraitGate .gate-icon { font-size: 44px; color: var(--cyan); animation: spin 3s linear infinite; }
+#portraitGate small { font-size: 11px; color: var(--muted); }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 1100px) {
+  .axis-legend { display: none; }
+  .brand h1 { font-size: 26px; }
+  .controls { width: 186px; }
+}
+@media (max-width: 780px) {
+  .topbar { padding: 18px 18px 0; }
+  .brand .sub { display: none; }
+  .brand h1 { font-size: 20px; margin: 8px 0 0; }
+  .readout { width: 168px; padding: 10px 12px; }
+  .huge { font-size: 30px; }
+  .readout-meta { font-size: 8px; }
+  .controls { right: 14px; top: auto; bottom: 190px; transform: none; width: 158px; padding: 10px; }
+  .angle-box, .divider, .lang { display: none; }
+  .bottom { padding: 0 14px 10px; }
+  #curve { height: 70px; }
+  .tips, .credit { display: none; }
+  .curve-title { font-size: 9px; }
+}
+@media (orientation: portrait) and (max-width: 900px) {
+  #portraitGate { display: flex; }
+}
+
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="scene"></canvas>
+  <div class="atmosphere"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="eyebrow"><span class="dot"></span> VIBE CODING <span class="sep">/</span> DATA AS WEATHER</div>
+      <h1 data-zh="如果降雨数据变成雨" data-en="When Rainfall Data Becomes Rain">如果降雨数据变成雨</h1>
+      <p class="sub" data-zh="把 00:00 — 24:00 的 25 个逐时降雨数据点，变成一场可以感受的雨" data-en="25 hourly rainfall values, 00:00 to 24:00, turned into rain you can feel">把 00:00 — 24:00 的 25 个逐时降雨数据点，变成一场可以感受的雨</p>
+    </div>
+
+    <div class="readout glass">
+      <div class="readout-top">
+        <span class="label" data-zh="当前时刻 / TIME" data-en="CURRENT TIME">当前时刻 / TIME</span>
+        <span class="mono clock" id="timeValue">18:00</span>
+      </div>
+      <div class="intensity-line">
+        <span class="mono huge" id="intensity">12.6</span>
+        <span class="unit" data-zh="毫米/小时" data-en="mm / hour">毫米/小时</span>
+      </div>
+      <div class="bar"><i id="levelFill"></i></div>
+      <div class="readout-meta">
+        <span id="levelText" class="level">大雨</span>
+        <span class="mono" id="particleCount">0 DROPS</span>
+        <span class="mono" id="fps">60 FPS</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="axis-legend glass">
+    <div class="legend-title" data-zh="坐标 · AXES" data-en="AXES">坐标 · AXES</div>
+    <div><span class="swatch x"></span><span data-zh="X 时间 00:00—24:00" data-en="X time 00:00—24:00">X 时间 00:00—24:00</span></div>
+    <div><span class="swatch y"></span><span data-zh="Y 降雨强度 mm/h" data-en="Y intensity mm/h">Y 降雨强度 mm/h</span></div>
+    <div><span class="swatch z"></span><span data-zh="Z 雨幕深度" data-en="Z rain depth">Z rain depth</span></div>
+  </div>
+
+  <aside class="controls glass">
+    <div class="ctrl-title" data-zh="视角控制 · VIEW" data-en="VIEW CONTROL">视角控制 · VIEW</div>
+    <button class="btn primary" id="rotateBtn"><span class="icon">&#10227;</span><span data-zh="旋转 30°" data-en="Rotate 30°">旋转 30°</span></button>
+    <div class="btn-row">
+      <button class="btn" id="rotateBack">&#10226; &minus;30&deg;</button>
+      <button class="btn" id="resetView" data-zh="重置" data-en="Reset">重置</button>
+    </div>
+    <div class="angle-box">
+      <div><span data-zh="方位角" data-en="Azimuth">方位角</span><strong class="mono" id="yawValue">30&deg;</strong></div>
+      <div><span data-zh="俯仰角" data-en="Elevation">俯仰角</span><strong class="mono" id="pitchValue">30&deg;</strong></div>
+    </div>
+    <div class="divider"></div>
+    <label class="switch"><input type="checkbox" id="autoRotate"><span class="track"></span><span data-zh="自动旋转" data-en="Auto rotate">自动旋转</span></label>
+    <label class="switch"><input type="checkbox" id="soundToggle"><span class="track"></span><span data-zh="雨声" data-en="Rain sound">雨声</span></label>
+    <button class="lang" id="langBtn">EN</button>
+  </aside>
+
+  <footer class="bottom">
+    <div class="curve-panel glass">
+      <div class="curve-head">
+        <div class="curve-title" data-zh="降雨曲线 · 拖动数据点，改写这场雨" data-en="Rainfall curve · drag the dots to reshape the rain">降雨曲线 · 拖动数据点，改写这场雨</div>
+        <div class="transport">
+          <button class="btn sm" id="playBtn"><span id="playIcon">&#10074;&#10074;</span> <span id="playLabel" data-zh="暂停" data-en="Pause">暂停</span></button>
+          <button class="btn sm mono" id="speedBtn">1&times;</button>
+          <button class="btn sm" id="resetData" data-zh="还原数据" data-en="Reset data">还原数据</button>
+        </div>
+      </div>
+      <canvas id="curve"></canvas>
+    </div>
+    <div class="tips">
+      <span data-zh="拖拽画面旋转视角" data-en="Drag to rotate">拖拽画面旋转视角</span><b>&middot;</b>
+      <span data-zh="滚轮缩放" data-en="Scroll to zoom">滚轮缩放</span><b>&middot;</b>
+      <span data-zh="双击重置视角" data-en="Double-click to reset">双击重置视角</span><b>&middot;</b>
+      <span data-zh="← → 每次 30°" data-en="Left / Right arrow: 30°">← → 每次 30°</span>
+    </div>
+    <div class="credit" data-zh="灵感来自 afterimage-lab《Rainform / 数据成雨》 · 本页面为独立实现的致敬作品 · 降雨数据为演示用示例数据" data-en="Inspired by afterimage-lab's Rainform · An independent tribute implementation · Demo rainfall data">灵感来自 afterimage-lab《Rainform / 数据成雨》 · 本页面为独立实现的致敬作品 · 降雨数据为演示用示例数据</div>
+  </footer>
+
+  <div id="portraitGate">
+    <div class="gate-icon">&#10227;</div>
+    <div data-zh="请将设备横屏" data-en="Please rotate your device">请将设备横屏</div>
+    <small data-zh="横屏体验完整的数据雨景" data-en="Landscape for the full experience">横屏体验完整的数据雨景</small>
+  </div>
+</div>
+<script>
+/*
+ * 如果降雨数据变成雨 / When Rainfall Data Becomes Rain
+ * 独立实现的致敬作品：把 25 个逐时降雨数据点变成一场可旋转、可编辑、可聆听的实时粒子雨。
+ * 灵感来自 afterimage-lab《Rainform / 数据成雨》。
+ */
+(() => {
+  'use strict';
+
+  // ------------------------------------------------------------------ data
+  const DEFAULT_DATA = [
+    0.8, 0.5, 0.3, 0.2, 0.4, 0.9, 1.6, 2.3, 3.0, 2.4,
+    3.7, 5.1, 7.6, 9.9, 6.4, 4.2, 5.8, 9.1, 12.6, 14.2,
+    10.3, 7.1, 4.5, 2.6, 1.3
+  ];
+  let data = DEFAULT_DATA.slice();
+
+  const N = 25;
+  const MAX_MM = 20;
+  const H_SCALE = 9;          // 20 mm/h -> 9 world units
+  const D = 9;                // rain curtain depth
+  const HD = D / 2;
+  const X_MIN = -12, X_MAX = 12;
+  const RAD = Math.PI / 180;
+  const MONO = 'SFMono-Regular, Consolas, Menlo, monospace';
+  const CP = { l: 26, r: 14, t: 10, b: 16 };
+
+  const state = {
+    t: 18,
+    playing: true,
+    speedIdx: 1,
+    speeds: [0.5, 1, 2],
+    yaw: 30, pitch: 30,
+    targetYaw: 30, targetPitch: 30,
+    zoom: 1,
+    autoRotate: false,
+    sound: false,
+    lang: 'zh',
+    energy: 0
+  };
+
+  const $ = id => document.getElementById(id);
+  const scene = $('scene'), ctx = scene.getContext('2d');
+  const curveCv = $('curve'), cctx = curveCv.getContext('2d');
+
+  let VW = 0, VH = 0, CW = 0, CH = 0, dpr = 1;
+  let cy = 1, sy = 0, cp = 1, sp = 0, S = 1, OX = 0, OY = 0;
+  let particles = [], ripples = [], foreground = [];
+  let cum = [], cumTotal = 1;
+  let hoverIdx = -1, dragIdx = -1, draggingCurve = false;
+  let draggingScene = false, lastPX = 0, lastPY = 0;
+  let uiTick = 0, fpsFrames = 0, fpsTime = 0, lastFrame = performance.now();
+  let audio = null;
+
+  const fract = x => x - Math.floor(x);
+  const clamp = (v, a, b) => v < a ? a : (v > b ? b : v);
+  const yOf = v => v / MAX_MM * H_SCALE;
+  const hourToX = h => h - 12;
+  const fmtTime = t => {
+    const h = Math.floor(Math.min(t, 23.999));
+    const m = Math.floor((t - h) * 60);
+    return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+  };
+
+  function valueAt(h) {
+    const x = clamp(h, 0, 24);
+    const i = Math.floor(x);
+    if (i >= 24) return data[24];
+    const f = x - i;
+    return data[i] * (1 - f) + data[i + 1] * f;
+  }
+
+  function levelName(v) {
+    if (state.lang === 'en') {
+      if (v < 0.5) return 'MIST';
+      if (v < 2.5) return 'LIGHT';
+      if (v < 8) return 'MODERATE';
+      if (v < 16) return 'HEAVY';
+      return 'TORRENTIAL';
+    }
+    if (v < 0.5) return '微量';
+    if (v < 2.5) return '小雨';
+    if (v < 8) return '中雨';
+    if (v < 16) return '大雨';
+    return '暴雨';
+  }
+
+  // ------------------------------------------------------------------ setup
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    VW = window.innerWidth;
+    VH = window.innerHeight;
+    scene.width = Math.round(VW * dpr);
+    scene.height = Math.round(VH * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    CW = curveCv.clientWidth || 600;
+    CH = curveCv.clientHeight || 96;
+    curveCv.width = Math.round(CW * dpr);
+    curveCv.height = Math.round(CH * dpr);
+    cctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    buildForeground();
+  }
+
+  function buildForeground() {
+    foreground = [];
+    const count = Math.round(clamp(VW / 12, 60, 150));
+    for (let i = 0; i < count; i++) {
+      foreground.push({
+        x: Math.random() * VW, y: Math.random() * VH,
+        l: 8 + Math.random() * 24, s: 240 + Math.random() * 340,
+        a: 0.025 + Math.random() * 0.075
+      });
+    }
+  }
+
+  function updateCamera() {
+    cy = Math.cos(state.yaw * RAD);
+    sy = Math.sin(state.yaw * RAD);
+    cp = Math.cos(state.pitch * RAD);
+    sp = Math.sin(state.pitch * RAD);
+    S = Math.min(VW / 36, VH / 20) * state.zoom;
+    OX = VW * 0.5;
+    OY = VH * 0.60;
+  }
+
+  // weak-perspective 3D projection: world (x, y, z) -> screen
+  function P(x, y, z) {
+    const rx = x * cy - z * sy;
+    const rz = x * sy + z * cy;
+    const ry = y * cp - rz * sp;
+    const depth = y * sp + rz * cp;
+    const k = 1 + depth * 0.006;
+    return { x: OX + rx * S * k, y: OY - ry * S * k, d: depth };
+  }
+
+  function seg(a, b, color, width, dash) {
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    if (dash) ctx.setLineDash(dash);
+    ctx.stroke();
+    if (dash) ctx.setLineDash([]);
+  }
+
+  // ------------------------------------------------------------------ particles
+  function rebuildWeights() {
+    cum = [0];
+    for (let i = 0; i < N; i++) cum.push(cum[i] + 0.18 + data[i] * 0.9);
+    cumTotal = cum[N] || 1;
+  }
+
+  function pickHour() {
+    const r = Math.random() * cumTotal;
+    let lo = 0, hi = N;
+    while (lo < hi - 1) {
+      const mid = (lo + hi) >> 1;
+      if (cum[mid] <= r) lo = mid; else hi = mid;
+    }
+    return Math.min(24, lo + Math.random());
+  }
+
+  function spawn(p) {
+    const h = pickHour();
+    p.h = h;
+    p.z = (Math.random() - 0.5) * D;
+    p.top = yOf(valueAt(h));
+    p.y = p.top * (0.85 + Math.random() * 0.15) + Math.random() * 0.9;
+    p.vy = 7 + Math.random() * 6 + state.energy * 0.18;
+    p.len = 0.22 + Math.random() * 0.5;
+    p.bright = Math.random();
+  }
+
+  function updateParticles(dt) {
+    const target = Math.round(320 + clamp(state.energy, 0, MAX_MM) / MAX_MM * 2300);
+    if (particles.length < target) {
+      const add = Math.min(80, target - particles.length);
+      for (let i = 0; i < add; i++) { const p = {}; spawn(p); particles.push(p); }
+    } else if (particles.length > target) {
+      particles.length = Math.max(target, particles.length - 80);
+    }
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+      p.y -= p.vy * dt;
+      if (p.y <= 0) {
+        if (Math.random() < 0.20 && ripples.length < 52) {
+          ripples.push({ h: p.h, z: p.z, r: 0.05, a: 0.85 });
+        }
+        spawn(p);
+      }
+    }
+    for (let i = ripples.length - 1; i >= 0; i--) {
+      const r = ripples[i];
+      r.r += dt * 2.1;
+      r.a -= dt * 0.72;
+      if (r.a <= 0) ripples.splice(i, 1);
+    }
+  }
+
+  // ------------------------------------------------------------------ scene drawing
+  function drawBackground(intensity) {
+    const g = ctx.createRadialGradient(VW * 0.5, VH * 0.30, 0, VW * 0.5, VH * 0.30, Math.max(VW, VH) * 0.56);
+    g.addColorStop(0, 'rgba(58, 122, 190, ' + (0.05 + intensity / MAX_MM * 0.07).toFixed(3) + ')');
+    g.addColorStop(1, 'rgba(4, 8, 15, 0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, VW, VH);
+
+    let ph = 0, pv = 0;
+    for (let i = 0; i < N; i++) if (data[i] > pv) { pv = data[i]; ph = i; }
+    const t = P(hourToX(ph), yOf(pv) * 0.5, 0);
+    const glow = ctx.createRadialGradient(t.x, t.y, 0, t.x, t.y, Math.max(120, 210 * state.zoom));
+    glow.addColorStop(0, 'rgba(90, 175, 255, ' + (0.05 + pv / MAX_MM * 0.10).toFixed(3) + ')');
+    glow.addColorStop(1, 'rgba(60, 130, 220, 0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(t.x - 260, t.y - 260, 520, 520);
+  }
+
+  function drawGround() {
+    const a = P(X_MIN, 0, -HD), b = P(X_MAX, 0, -HD);
+    const c = P(X_MAX, 0, HD), d = P(X_MIN, 0, HD);
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.lineTo(c.x, c.y); ctx.lineTo(d.x, d.y);
+    ctx.closePath();
+    const ys = [a.y, b.y, c.y, d.y];
+    const g = ctx.createLinearGradient(0, Math.min.apply(null, ys), 0, Math.max.apply(null, ys));
+    g.addColorStop(0, 'rgba(20, 48, 80, 0.48)');
+    g.addColorStop(1, 'rgba(8, 24, 44, 0.16)');
+    ctx.fillStyle = g;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(130, 195, 255, 0.16)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    for (let h = 0; h <= 24; h++) {
+      const p1 = P(hourToX(h), 0, -HD), p2 = P(hourToX(h), 0, HD);
+      seg(p1, p2, h % 6 === 0 ? 'rgba(130, 195, 255, 0.20)' : 'rgba(120, 180, 240, 0.065)', 1);
+    }
+    for (let i = 0; i <= 6; i++) {
+      const z = -HD + i * D / 6;
+      seg(P(X_MIN, 0, z), P(X_MAX, 0, z), 'rgba(120, 180, 240, 0.075)', 1);
+    }
+    // moving highlight of "now" on the water surface
+    const hx = hourToX(state.t);
+    seg(P(hx, 0.01, -HD), P(hx, 0.01, HD), 'rgba(150, 215, 255, 0.22)', 1.4);
+  }
+
+  function drawRipples() {
+    for (const r of ripples) {
+      ctx.beginPath();
+      for (let i = 0; i <= 20; i++) {
+        const ang = i / 20 * Math.PI * 2;
+        const p = P(hourToX(r.h) + Math.cos(ang) * r.r, 0.02, r.z + Math.sin(ang) * r.r);
+        if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+      }
+      ctx.closePath();
+      ctx.strokeStyle = 'rgba(155, 218, 255, ' + (r.a * 0.32).toFixed(3) + ')';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+  }
+
+  function drawCeiling() {
+    const steps = 48;
+    for (let i = 0; i < steps; i++) {
+      const h0 = i / steps * 24, h1 = (i + 1) / steps * 24;
+      const y0 = yOf(valueAt(h0)), y1 = yOf(valueAt(h1));
+      const v = (valueAt(h0) + valueAt(h1)) * 0.5;
+      const p1 = P(hourToX(h0), y0, -HD), p2 = P(hourToX(h1), y1, -HD);
+      const p3 = P(hourToX(h1), y1, HD), p4 = P(hourToX(h0), y0, HD);
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
+      ctx.lineTo(p3.x, p3.y); ctx.lineTo(p4.x, p4.y); ctx.closePath();
+      ctx.fillStyle = 'rgba(96, 178, 255, ' + (0.012 + v / MAX_MM * 0.052).toFixed(3) + ')';
+      ctx.fill();
+    }
+    for (const z of [-HD, HD]) {
+      ctx.beginPath();
+      for (let i = 0; i <= 96; i++) {
+        const h = i / 96 * 24;
+        const p = P(hourToX(h), yOf(valueAt(h)), z);
+        if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+      }
+      ctx.strokeStyle = 'rgba(140, 205, 255, 0.30)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    for (let h = 0; h <= 24; h += 2) {
+      seg(P(hourToX(h), yOf(valueAt(h)), -HD), P(hourToX(h), yOf(valueAt(h)), HD),
+        'rgba(120, 190, 250, 0.10)', 1);
+    }
+  }
+
+  function drawCurtain() {
+    const start = P(X_MIN, 0, 0);
+    ctx.beginPath();
+    ctx.moveTo(start.x, start.y);
+    for (let i = 0; i <= 96; i++) {
+      const h = i / 96 * 24;
+      const p = P(hourToX(h), yOf(valueAt(h)), 0);
+      ctx.lineTo(p.x, p.y);
+    }
+    const end = P(X_MAX, 0, 0);
+    ctx.lineTo(end.x, end.y);
+    ctx.closePath();
+    const g = ctx.createLinearGradient(0, OY - H_SCALE * S, 0, OY + 70);
+    g.addColorStop(0, 'rgba(92, 176, 255, 0.15)');
+    g.addColorStop(1, 'rgba(52, 120, 200, 0.012)');
+    ctx.fillStyle = g;
+    ctx.fill();
+  }
+
+  function drawParticles() {
+    const buckets = [[], [], [], [], [], []];
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+      const a = P(hourToX(p.h), p.y, p.z);
+      const b = P(hourToX(p.h), Math.max(0, p.y - p.len), p.z);
+      const depth = p.z < -D / 6 ? 0 : (p.z > D / 6 ? 2 : 1);
+      const hot = (valueAt(p.h) / MAX_MM * 0.6 + p.bright * 0.4) > 0.52 ? 1 : 0;
+      buckets[depth * 2 + hot].push(a.x, a.y, b.x, b.y);
+    }
+    const styles = [
+      ['rgba(110, 170, 245, 0.13)', 0.7], ['rgba(180, 225, 255, 0.34)', 1.0],
+      ['rgba(130, 190, 250, 0.20)', 0.8], ['rgba(190, 232, 255, 0.46)', 1.1],
+      ['rgba(160, 210, 255, 0.28)', 0.9], ['rgba(220, 245, 255, 0.62)', 1.3]
+    ];
+    for (let i = 0; i < 6; i++) {
+      const s = buckets[i];
+      if (!s.length) continue;
+      ctx.beginPath();
+      for (let j = 0; j < s.length; j += 4) {
+        ctx.moveTo(s[j], s[j + 1]);
+        ctx.lineTo(s[j + 2], s[j + 3]);
+      }
+      ctx.strokeStyle = styles[i][0];
+      ctx.lineWidth = styles[i][1];
+      ctx.stroke();
+    }
+  }
+
+  function drawWaterfall(now) {
+    let ph = 0, pv = 0;
+    for (let i = 0; i < N; i++) if (data[i] > pv) { pv = data[i]; ph = i; }
+    if (pv < 5) return;
+    const y = yOf(pv);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 96; i++) {
+      const seed = i * 0.6180339887;
+      const h = ph + (fract(seed) - 0.5) * 1.2;
+      const z = (fract(seed * 7.31) - 0.5) * D * 0.82;
+      const phase = fract(seed * 13.7 + now * 0.00055 * (1 + fract(seed * 3.1)));
+      const y0 = y * (1 - phase);
+      const a = P(hourToX(h), y0, z);
+      const b = P(hourToX(h), Math.max(0, y0 - y * 0.22), z);
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+      ctx.strokeStyle = 'rgba(170, 225, 255, ' + (0.05 + 0.16 * fract(seed * 5.71)).toFixed(3) + ')';
+      ctx.lineWidth = 0.9;
+      ctx.stroke();
+    }
+    const g = P(hourToX(ph), 0, 0);
+    const rg = ctx.createRadialGradient(g.x, g.y, 0, g.x, g.y, 70 * state.zoom);
+    rg.addColorStop(0, 'rgba(150, 215, 255, ' + (pv / MAX_MM * 0.22).toFixed(3) + ')');
+    rg.addColorStop(1, 'rgba(120, 190, 255, 0)');
+    ctx.fillStyle = rg;
+    ctx.fillRect(g.x - 90, g.y - 90, 180, 180);
+    ctx.restore();
+  }
+
+  function drawCurveLine() {
+    for (const z of [-HD, HD]) {
+      ctx.beginPath();
+      for (let i = 0; i <= 120; i++) {
+        const h = i / 120 * 24;
+        const p = P(hourToX(h), yOf(valueAt(h)), z);
+        if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+      }
+      ctx.strokeStyle = 'rgba(140, 205, 255, 0.34)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    ctx.save();
+    ctx.shadowColor = 'rgba(120, 200, 255, 0.85)';
+    ctx.shadowBlur = 18;
+    ctx.beginPath();
+    for (let i = 0; i <= 120; i++) {
+      const h = i / 120 * 24;
+      const p = P(hourToX(h), yOf(valueAt(h)), 0);
+      if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+    }
+    ctx.strokeStyle = 'rgba(190, 232, 255, 0.95)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.restore();
+    for (let i = 0; i < N; i++) {
+      const p = P(hourToX(i), yOf(data[i]), 0);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 2.1, 0, Math.PI * 2);
+      ctx.fillStyle = '#e2f5ff';
+      ctx.fill();
+    }
+  }
+
+  function drawTimeMarker() {
+    const h = state.t, v = valueAt(h), y = yOf(v);
+    const top = P(hourToX(h), y, 0), bot = P(hourToX(h), 0, 0);
+    seg(top, bot, 'rgba(180, 230, 255, 0.42)', 1, [4, 5]);
+    ctx.beginPath();
+    for (let i = 0; i <= 24; i++) {
+      const a = i / 24 * Math.PI * 2;
+      const p = P(hourToX(h) + Math.cos(a) * 0.55, 0.02, Math.sin(a) * 0.55);
+      if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+    }
+    ctx.strokeStyle = 'rgba(190, 235, 255, 0.7)';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(top.x, top.y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(225, 248, 255, 0.95)';
+    ctx.shadowColor = 'rgba(140, 215, 255, 0.9)';
+    ctx.shadowBlur = 16;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.font = '11px ' + MONO;
+    ctx.textBaseline = 'bottom';
+    if (top.x > VW - 190) { ctx.textAlign = 'right'; ctx.fillText(fmtTime(h) + '  ' + v.toFixed(1), top.x - 10, top.y - 8); }
+    else { ctx.textAlign = 'left'; ctx.fillText(fmtTime(h) + '  ' + v.toFixed(1), top.x + 10, top.y - 8); }
+    ctx.fillStyle = 'rgba(205, 238, 255, 0.85)';
+    ctx.strokeStyle = 'rgba(205, 238, 255, 0.85)';
+  }
+
+  function drawAxes() {
+    const zF = HD + 0.85;
+    ctx.font = '10px ' + MONO;
+    ctx.lineWidth = 1;
+    // X axis (time)
+    seg(P(X_MIN, 0, zF), P(X_MAX, 0, zF), 'rgba(127, 208, 255, 0.36)', 1);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = 'rgba(150, 195, 235, 0.50)';
+    for (let h = 0; h <= 24; h++) {
+      const p = P(hourToX(h), 0, zF);
+      if (h % 6 === 0) {
+        seg(p, P(hourToX(h), 0, zF + 0.35), 'rgba(127, 208, 255, 0.32)', 1);
+        ctx.fillText(String(h).padStart(2, '0') + ':00', p.x, p.y + 12);
+      } else {
+        seg(p, P(hourToX(h), 0, zF + 0.18), 'rgba(127, 208, 255, 0.16)', 1);
+      }
+    }
+    // Y axis (intensity)
+    const yBase = P(X_MIN - 0.55, 0, zF), yTop = P(X_MIN - 0.55, H_SCALE, zF);
+    seg(yBase, yTop, 'rgba(167, 233, 200, 0.34)', 1);
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(167, 220, 200, 0.48)';
+    for (const v of [0, 5, 10, 15, 20]) {
+      const p = P(X_MIN - 0.55, yOf(v), zF);
+      seg(p, P(X_MIN - 0.3, yOf(v), zF), 'rgba(167, 233, 200, 0.28)', 1);
+      ctx.fillText(String(v), p.x - 6, p.y);
+    }
+    // Z axis (depth)
+    seg(P(X_MIN, 0, -HD), P(X_MIN, 0, HD), 'rgba(184, 167, 255, 0.26)', 1, [3, 5]);
+    const zp = P(X_MIN, 0, -HD);
+    ctx.textAlign = 'left';
+    ctx.fillStyle = 'rgba(184, 167, 255, 0.42)';
+    ctx.fillText(state.lang === 'zh' ? '雨幕深度' : 'DEPTH', zp.x + 6, zp.y - 10);
+  }
+
+  function drawForeground(dt) {
+    ctx.lineWidth = 0.7;
+    const speed = 0.55 + state.energy / MAX_MM;
+    for (const d of foreground) {
+      d.y += d.s * dt * speed;
+      if (d.y > VH + 30) { d.y = -30; d.x = Math.random() * VW; }
+      ctx.beginPath();
+      ctx.moveTo(d.x, d.y);
+      ctx.lineTo(d.x + 2, d.y + d.l);
+      ctx.strokeStyle = 'rgba(190, 225, 255, ' + d.a.toFixed(3) + ')';
+      ctx.stroke();
+    }
+  }
+
+  // ------------------------------------------------------------------ curve editor
+  function editorX(i) { return CP.l + (i / 24) * (CW - CP.l - CP.r); }
+  function editorY(v) { return CH - CP.b - (v / MAX_MM) * (CH - CP.t - CP.b); }
+
+  function drawCurveEditor() {
+    cctx.clearRect(0, 0, CW, CH);
+    cctx.lineWidth = 1;
+    cctx.font = '9px ' + MONO;
+    for (const v of [0, 5, 10, 15, 20]) {
+      const y = editorY(v);
+      cctx.beginPath(); cctx.moveTo(CP.l, y); cctx.lineTo(CW - CP.r, y);
+      cctx.strokeStyle = 'rgba(130, 190, 245, 0.09)'; cctx.stroke();
+      cctx.fillStyle = 'rgba(140, 185, 225, 0.35)';
+      cctx.textAlign = 'left'; cctx.textBaseline = 'middle';
+      cctx.fillText(String(v), 2, y);
+    }
+    cctx.textAlign = 'center'; cctx.textBaseline = 'top';
+    cctx.fillStyle = 'rgba(140, 185, 225, 0.32)';
+    for (const h of [0, 6, 12, 18, 24]) cctx.fillText(String(h).padStart(2, '0') + ':00', editorX(h), CH - CP.b + 3);
+
+    cctx.beginPath();
+    cctx.moveTo(editorX(0), editorY(0));
+    for (let i = 0; i < N; i++) cctx.lineTo(editorX(i), editorY(data[i]));
+    cctx.lineTo(editorX(24), editorY(0));
+    cctx.closePath();
+    const g = cctx.createLinearGradient(0, CP.t, 0, CH - CP.b);
+    g.addColorStop(0, 'rgba(110, 195, 255, 0.30)');
+    g.addColorStop(1, 'rgba(60, 130, 210, 0.02)');
+    cctx.fillStyle = g; cctx.fill();
+
+    cctx.save();
+    cctx.shadowColor = 'rgba(110, 190, 255, 0.7)';
+    cctx.shadowBlur = 8;
+    cctx.beginPath();
+    for (let i = 0; i < N; i++) {
+      if (i === 0) cctx.moveTo(editorX(i), editorY(data[i]));
+      else cctx.lineTo(editorX(i), editorY(data[i]));
+    }
+    cctx.strokeStyle = 'rgba(165, 226, 255, 0.95)';
+    cctx.lineWidth = 1.6;
+    cctx.stroke();
+    cctx.restore();
+
+    for (let i = 0; i < N; i++) {
+      const active = i === hoverIdx || i === dragIdx;
+      cctx.beginPath();
+      cctx.arc(editorX(i), editorY(data[i]), active ? 4.2 : 2.4, 0, Math.PI * 2);
+      cctx.fillStyle = active ? '#ffffff' : 'rgba(205, 239, 255, 0.85)';
+      cctx.fill();
+    }
+
+    const cx = editorX(state.t);
+    cctx.setLineDash([3, 4]);
+    cctx.beginPath(); cctx.moveTo(cx, CP.t - 2); cctx.lineTo(cx, CH - CP.b);
+    cctx.strokeStyle = 'rgba(255, 255, 255, 0.45)'; cctx.lineWidth = 1; cctx.stroke();
+    cctx.setLineDash([]);
+    cctx.beginPath();
+    cctx.arc(cx, editorY(valueAt(state.t)), 3, 0, Math.PI * 2);
+    cctx.fillStyle = '#ffffff'; cctx.fill();
+
+    if (hoverIdx >= 0) {
+      cctx.font = '10px ' + MONO;
+      cctx.textAlign = hoverIdx > 18 ? 'right' : 'left';
+      cctx.fillStyle = 'rgba(230, 246, 255, 0.9)';
+      cctx.fillText(fmtTime(hoverIdx) + '  ' + data[hoverIdx].toFixed(1) + ' mm',
+        hoverIdx > 18 ? CW - CP.r : CP.l + 4, CP.t + 2);
+    }
+  }
+
+  // ------------------------------------------------------------------ audio
+  function ensureAudio() {
+    if (audio) { if (audio.ctx.state === 'suspended') audio.ctx.resume(); return; }
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    const ac = new AC();
+    const buf = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate);
+    const ch = buf.getChannelData(0);
+    let last = 0;
+    for (let i = 0; i < ch.length; i++) {
+      const w = Math.random() * 2 - 1;
+      last = last * 0.35 + w * 0.65;
+      ch[i] = last * 0.55;
+    }
+    const src = ac.createBufferSource();
+    src.buffer = buf; src.loop = true;
+    const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 180;
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1400; lp.Q.value = 0.4;
+    const gain = ac.createGain(); gain.gain.value = 0;
+    src.connect(hp); hp.connect(lp); lp.connect(gain); gain.connect(ac.destination);
+    src.start();
+    audio = { ctx: ac, gain, lp };
+  }
+
+  function updateAudio(intensity) {
+    if (!audio) return;
+    const v = state.sound ? 0.015 + Math.min(intensity, MAX_MM) / MAX_MM * 0.11 : 0;
+    audio.gain.gain.setTargetAtTime(v, audio.ctx.currentTime, 0.25);
+    audio.lp.frequency.setTargetAtTime(650 + intensity * 95, audio.ctx.currentTime, 0.35);
+  }
+
+  // ------------------------------------------------------------------ UI
+  function normAngle(a) { return Math.round(((a % 360) + 360) % 360); }
+
+  function updateUI(intensity, dt) {
+    uiTick++;
+    if (uiTick % 4 === 0) {
+      $('timeValue').textContent = fmtTime(state.t);
+      $('intensity').textContent = intensity.toFixed(1);
+      $('levelFill').style.width = (clamp(intensity / MAX_MM, 0, 1) * 100).toFixed(1) + '%';
+      $('levelText').textContent = levelName(intensity);
+      $('particleCount').textContent = particles.length.toLocaleString() + (state.lang === 'zh' ? ' 粒子' : ' DROPS');
+      $('yawValue').textContent = normAngle(state.targetYaw) + '\u00B0';
+      $('pitchValue').textContent = Math.round(state.pitch) + '\u00B0';
+    }
+    fpsFrames++; fpsTime += dt;
+    if (fpsTime > 0.6) {
+      $('fps').textContent = Math.round(fpsFrames / fpsTime) + ' FPS';
+      fpsFrames = 0; fpsTime = 0;
+    }
+  }
+
+  function syncPlayLabel() {
+    $('playIcon').textContent = state.playing ? '\u275A\u275A' : '\u25B6';
+    $('playLabel').textContent = state.playing
+      ? (state.lang === 'zh' ? '暂停' : 'Pause')
+      : (state.lang === 'zh' ? '播放' : 'Play');
+  }
+
+  function applyLang() {
+    document.querySelectorAll('[data-zh]').forEach(el => {
+      const v = state.lang === 'zh' ? el.dataset.zh : el.dataset.en;
+      if (v) el.textContent = v;
+    });
+    $('langBtn').textContent = state.lang === 'zh' ? 'EN' : '中';
+    document.documentElement.lang = state.lang === 'zh' ? 'zh-CN' : 'en';
+    syncPlayLabel();
+    updateUI(valueAt(state.t), 0);
+  }
+
+  function rotateBy(deg) { state.targetYaw += deg; }
+
+  function resetView() {
+    state.targetYaw = 30;
+    state.targetPitch = 30;
+    state.zoom = 1;
+    state.autoRotate = false;
+    $('autoRotate').checked = false;
+  }
+
+  // ------------------------------------------------------------------ events
+  $('rotateBtn').addEventListener('click', () => rotateBy(30));
+  $('rotateBack').addEventListener('click', () => rotateBy(-30));
+  $('resetView').addEventListener('click', resetView);
+  $('autoRotate').addEventListener('change', e => { state.autoRotate = e.target.checked; });
+  $('soundToggle').addEventListener('change', e => {
+    state.sound = e.target.checked;
+    if (state.sound) ensureAudio();
+  });
+  $('langBtn').addEventListener('click', () => {
+    state.lang = state.lang === 'zh' ? 'en' : 'zh';
+    applyLang();
+  });
+  $('playBtn').addEventListener('click', () => { state.playing = !state.playing; syncPlayLabel(); });
+  $('speedBtn').addEventListener('click', () => {
+    state.speedIdx = (state.speedIdx + 1) % state.speeds.length;
+    $('speedBtn').textContent = ['0.5\u00D7', '1\u00D7', '2\u00D7'][state.speedIdx];
+  });
+  $('resetData').addEventListener('click', () => { data = DEFAULT_DATA.slice(); rebuildWeights(); });
+
+  function curvePos(e) {
+    const r = curveCv.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  }
+  function setDataFromPointer(p) {
+    const v = clamp((CH - CP.b - p.y) / (CH - CP.t - CP.b) * MAX_MM, 0, MAX_MM);
+    data[dragIdx] = Math.round(v * 10) / 10;
+    rebuildWeights();
+  }
+  curveCv.addEventListener('pointerdown', e => {
+    const p = curvePos(e);
+    dragIdx = clamp(Math.round((p.x - CP.l) / (CW - CP.l - CP.r) * 24), 0, 24);
+    draggingCurve = true;
+    curveCv.setPointerCapture(e.pointerId);
+    setDataFromPointer(p);
+  });
+  curveCv.addEventListener('pointermove', e => {
+    const p = curvePos(e);
+    if (draggingCurve) { setDataFromPointer(p); return; }
+    hoverIdx = clamp(Math.round((p.x - CP.l) / (CW - CP.l - CP.r) * 24), 0, 24);
+  });
+  curveCv.addEventListener('pointerup', () => { draggingCurve = false; dragIdx = -1; });
+  curveCv.addEventListener('pointercancel', () => { draggingCurve = false; dragIdx = -1; });
+  curveCv.addEventListener('pointerleave', () => { if (!draggingCurve) hoverIdx = -1; });
+
+  scene.addEventListener('pointerdown', e => {
+    draggingScene = true;
+    lastPX = e.clientX; lastPY = e.clientY;
+    scene.setPointerCapture(e.pointerId);
+    scene.classList.add('dragging');
+    state.autoRotate = false;
+    $('autoRotate').checked = false;
+  });
+  scene.addEventListener('pointermove', e => {
+    if (!draggingScene) return;
+    const dx = e.clientX - lastPX, dy = e.clientY - lastPY;
+    lastPX = e.clientX; lastPY = e.clientY;
+    state.yaw += dx * 0.28; state.targetYaw += dx * 0.28;
+    state.pitch = clamp(state.pitch + dy * 0.16, 8, 62);
+    state.targetPitch = state.pitch;
+  });
+  const endSceneDrag = () => { draggingScene = false; scene.classList.remove('dragging'); };
+  scene.addEventListener('pointerup', endSceneDrag);
+  scene.addEventListener('pointercancel', endSceneDrag);
+  scene.addEventListener('dblclick', resetView);
+  scene.addEventListener('wheel', e => {
+    e.preventDefault();
+    state.zoom = clamp(state.zoom - e.deltaY * 0.0009, 0.55, 1.9);
+  }, { passive: false });
+
+  window.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') { rotateBy(30); e.preventDefault(); }
+    else if (e.key === 'ArrowLeft') { rotateBy(-30); e.preventDefault(); }
+    else if (e.code === 'Space') { state.playing = !state.playing; syncPlayLabel(); e.preventDefault(); }
+    else if (e.key === 'r' || e.key === 'R') resetView();
+    else if (e.key === 'a' || e.key === 'A') {
+      state.autoRotate = !state.autoRotate;
+      $('autoRotate').checked = state.autoRotate;
+    }
+  });
+  window.addEventListener('resize', resize);
+
+  // ------------------------------------------------------------------ loop
+  function frame(now) {
+    const dt = Math.min((now - lastFrame) / 1000, 0.05);
+    lastFrame = now;
+
+    if (state.playing) {
+      state.t += dt * state.speeds[state.speedIdx];
+      if (state.t > 24) state.t -= 24;
+    }
+    let sum = 0, peak = 0;
+    for (let i = 0; i < N; i++) { sum += data[i]; if (data[i] > peak) peak = data[i]; }
+    state.energy = (sum / N) * 0.45 + peak * 0.55;
+
+    if (state.autoRotate) { state.targetYaw += dt * 6; state.yaw += dt * 6; }
+    state.yaw += (state.targetYaw - state.yaw) * Math.min(1, dt * 9);
+    state.pitch += (state.targetPitch - state.pitch) * Math.min(1, dt * 9);
+    updateCamera();
+
+    const intensity = valueAt(state.t);
+    updateParticles(dt);
+
+    ctx.clearRect(0, 0, VW, VH);
+    drawBackground(intensity);
+    drawGround();
+    drawRipples();
+    drawCeiling();
+    drawCurtain();
+    drawWaterfall(now);
+    drawParticles();
+    drawCurveLine();
+    drawTimeMarker();
+    drawAxes();
+    drawForeground(dt);
+    drawCurveEditor();
+    updateUI(intensity, dt);
+    updateAudio(intensity);
+
+    requestAnimationFrame(frame);
+  }
+
+  // ------------------------------------------------------------------ boot
+  resize();
+  rebuildWeights();
+  for (let i = 0; i < 1100; i++) { const p = {}; spawn(p); particles.push(p); }
+  applyLang();
+  syncPlayLabel();
+  requestAnimationFrame(frame);
+})();
+
+</script>
+</body>
+</html>

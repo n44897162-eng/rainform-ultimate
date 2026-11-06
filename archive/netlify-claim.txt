@@ -1,0 +1,16 @@
+公开链接（无需账号、无需分享码，任何人可直接打开）
+https://incomparable-pony-f84858.netlify.app/
+
+说明：这是 Netlify 官方的匿名部署，未认领的站点约 1 小时后会被自动清理。
+如需长期保留，请在有效期内打开下方认领链接，登录或注册一个免费的 Netlify 账号，
+即可把该站点转入自己的账号，变成永久链接（之后还能绑定自定义域名）。
+
+认领链接（完整打开，不要删掉 # 后面的部分）
+https://app.netlify.com/drop/incomparable-pony-f84858#drop_token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3OTM3OTI3MTgsImV4cCI6MTc5Mzc5NjMxOCwiaXNzIjoiTmV0bGlmeSIsInNlc3Npb25faWQiOiI3OGE4ZTljOC1kNWJjLTRjZDQtOWFjYS0wMTBiMDk2MGVkOWMifQ.hETYetI3zmwHQKvUWhGSsoUz50ipCsTUx7Be3kcN-o4
+
+命令行认领方式（需已登录 netlify-cli）
+netlify claim --site 97218430-a231-4a04-b71e-f6a2144908e6 --token eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3OTM3OTI3MTgsImV4cCI6MTc5Mzc5NjMxOCwiaXNzIjoiTmV0bGlmeSIsInNlc3Npb25faWQiOiI3OGE4ZTljOC1kNWJjLTRjZDQtOWFjYS0wMTBiMDk2MGVkOWMifQ.hETYetI3zmwHQKvUWhGSsoUz50ipCsTUx7Be3kcN-o4
+
+站点 ID: 97218430-a231-4a04-b71e-f6a2144908e6
+部署 ID: 6aeb1ad1b323ff8db5b3840e
+子域名: incomparable-pony-f84858

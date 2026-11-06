@@ -1,0 +1,1740 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="format-detection" content="telephone=no">
+<meta name="theme-color" content="#050a12">
+<meta name="description" content="把逐时降雨数据变成一场可以旋转、可以编辑、可以聆听的实时粒子雨。">
+<title>如果降雨数据变成雨 · Rainfall as Rain</title>
+<style>
+:root {
+  --bg: #050a12;
+  --ink: #e6f2ff;
+  --muted: rgba(178, 207, 236, 0.55);
+  --faint: rgba(150, 190, 230, 0.32);
+  --line: rgba(140, 195, 255, 0.14);
+  --cyan: #8fd3ff;
+  --blue: #4ea8ff;
+  --glass: rgba(9, 19, 32, 0.55);
+  --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  --sans: Inter, system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+#app { position: relative; width: 100%; height: 100%; overflow: hidden; }
+
+#scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; }
+#scene.dragging { cursor: grabbing; }
+
+.atmosphere {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(120% 80% at 50% 18%, rgba(48, 108, 178, 0.13), transparent 62%),
+    radial-gradient(90% 70% at 50% 105%, rgba(10, 40, 76, 0.35), transparent 70%),
+    linear-gradient(180deg, rgba(4, 8, 15, 0.28) 0%, transparent 26%, transparent 72%, rgba(3, 7, 13, 0.55) 100%);
+}
+
+.glass {
+  background: var(--glass);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  backdrop-filter: blur(16px) saturate(120%);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(190, 225, 255, 0.05);
+}
+
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+/* ---------- header ---------- */
+.topbar {
+  position: absolute; top: 0; left: 0; right: 0;
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 24px; padding: 28px 34px 0;
+  pointer-events: none;
+}
+.topbar > * { pointer-events: auto; }
+.brand { max-width: 620px; }
+.eyebrow {
+  display: flex; align-items: center; gap: 9px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.22em;
+  color: rgba(143, 211, 255, 0.75); text-transform: uppercase;
+}
+.eyebrow .dot {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--cyan);
+  box-shadow: 0 0 12px 3px rgba(143, 211, 255, 0.7);
+  animation: pulse 2.6s ease-in-out infinite;
+}
+@keyframes pulse { 50% { opacity: 0.35; } }
+.eyebrow .sep { opacity: 0.4; }
+.brand h1 {
+  margin: 14px 0 8px; font-size: clamp(24px, 2.7vw, 40px); font-weight: 300;
+  letter-spacing: 0.06em; line-height: 1.15;
+  text-shadow: 0 0 34px rgba(110, 190, 255, 0.28);
+}
+.brand .sub { margin: 0; font-size: 12px; color: var(--muted); letter-spacing: 0.04em; line-height: 1.7; }
+
+.readout { width: 258px; padding: 16px 18px 14px; flex: none; }
+.readout-top { display: flex; align-items: baseline; justify-content: space-between; }
+.label { font-size: 9px; letter-spacing: 0.16em; color: var(--faint); text-transform: uppercase; }
+.clock { font-size: 15px; color: rgba(215, 238, 255, 0.9); letter-spacing: 0.06em; }
+.intensity-line { display: flex; align-items: baseline; gap: 8px; margin-top: 6px; }
+.huge {
+  font-size: 46px; font-weight: 300; line-height: 1.05; letter-spacing: -0.03em;
+  color: #d5ecff; text-shadow: 0 0 28px rgba(90, 180, 255, 0.45);
+}
+.unit { font-size: 11px; color: var(--muted); }
+.bar { height: 3px; border-radius: 3px; background: rgba(130, 190, 255, 0.12); margin: 12px 0 10px; overflow: hidden; }
+.bar i {
+  display: block; height: 100%; width: 50%; border-radius: 3px;
+  background: linear-gradient(90deg, #4ea8ff, #a6e5ff);
+  box-shadow: 0 0 12px rgba(120, 200, 255, 0.8);
+  transition: width 0.25s ease;
+}
+.readout-meta { display: flex; justify-content: space-between; gap: 8px; font-size: 9px; color: var(--faint); font-family: var(--mono); }
+.readout-meta .level { color: var(--cyan); }
+
+/* ---------- legend ---------- */
+.axis-legend {
+  position: absolute; left: 34px; top: 150px;
+  display: flex; align-items: center; gap: 16px;
+  padding: 9px 14px; font-size: 10px; color: var(--muted);
+  letter-spacing: 0.03em; white-space: nowrap;
+}
+.legend-title { font-family: var(--mono); font-size: 9px; letter-spacing: 0.18em; color: var(--faint); margin: 0 2px 0 0; }
+.axis-legend > div:not(.legend-title) { display: flex; align-items: center; gap: 8px; }
+.swatch { width: 12px; height: 2px; flex: none; border-radius: 2px; }
+.swatch.x { background: #7fd0ff; }
+.swatch.y { background: #a7e9c8; }
+.swatch.z { background: #b8a7ff; }
+
+/* ---------- controls ---------- */
+.controls { position: absolute; right: 34px; top: 47%; transform: translateY(-50%); width: 208px; padding: 16px; }
+.ctrl-title { font-family: var(--mono); font-size: 9px; letter-spacing: 0.18em; color: var(--faint); margin-bottom: 12px; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; padding: 9px 10px; border-radius: 9px;
+  border: 1px solid rgba(140, 195, 255, 0.18);
+  background: rgba(120, 185, 255, 0.05); color: rgba(220, 240, 255, 0.82);
+  font-family: var(--sans); font-size: 11px; letter-spacing: 0.04em;
+  cursor: pointer; transition: all 0.18s ease;
+}
+.btn:hover { background: rgba(120, 190, 255, 0.14); border-color: rgba(160, 215, 255, 0.42); color: #fff; }
+.btn:active { transform: scale(0.97); }
+.btn.primary {
+  padding: 12px 10px; font-size: 13px; font-weight: 500;
+  color: #e9f7ff; border-color: rgba(143, 211, 255, 0.5);
+  background: linear-gradient(135deg, rgba(78, 168, 255, 0.26), rgba(143, 211, 255, 0.09));
+  box-shadow: 0 0 22px rgba(78, 168, 255, 0.16), inset 0 1px 0 rgba(200, 235, 255, 0.16);
+}
+.btn.primary:hover { box-shadow: 0 0 30px rgba(78, 168, 255, 0.34); background: linear-gradient(135deg, rgba(78, 168, 255, 0.38), rgba(143, 211, 255, 0.14)); }
+.btn.primary .icon { font-size: 18px; line-height: 1; }
+.btn-row { display: flex; gap: 8px; margin-top: 8px; }
+.btn-row .btn { font-family: var(--mono); font-size: 10px; padding: 8px 4px; }
+.angle-box { margin-top: 14px; display: grid; gap: 7px; font-size: 10px; color: var(--muted); }
+.angle-box > div { display: flex; justify-content: space-between; align-items: baseline; }
+.angle-box strong { font-size: 13px; color: var(--cyan); font-weight: 400; }
+.divider { height: 1px; background: var(--line); margin: 14px 0 12px; }
+.switch { display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--muted); cursor: pointer; padding: 5px 0; }
+.switch input { display: none; }
+.track { position: relative; width: 30px; height: 16px; border-radius: 10px; background: rgba(140, 190, 240, 0.16); border: 1px solid var(--line); transition: 0.2s; flex: none; }
+.track::after { content: ""; position: absolute; top: 2px; left: 2px; width: 10px; height: 10px; border-radius: 50%; background: rgba(190, 220, 250, 0.6); transition: 0.2s; }
+.switch input:checked + .track { background: rgba(78, 168, 255, 0.45); border-color: rgba(143, 211, 255, 0.6); }
+.switch input:checked + .track::after { transform: translateX(14px); background: #eaf7ff; }
+.lang { margin-top: 10px; width: 100%; padding: 7px; border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--faint); font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; cursor: pointer; transition: 0.2s; }
+.lang:hover { color: var(--cyan); border-color: rgba(143, 211, 255, 0.4); }
+
+/* ---------- bottom ---------- */
+.bottom { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 34px 18px; pointer-events: none; }
+.bottom > * { pointer-events: auto; }
+.curve-panel { padding: 12px 16px 8px; }
+.curve-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 4px; }
+.curve-title { font-size: 10px; letter-spacing: 0.1em; color: var(--muted); }
+.transport { display: flex; gap: 7px; }
+.btn.sm { width: auto; padding: 5px 11px; font-size: 10px; border-radius: 7px; white-space: nowrap; }
+#curve { display: block; width: 100%; height: 96px; cursor: crosshair; }
+.tips { display: flex; justify-content: center; gap: 10px; margin-top: 10px; font-size: 10px; color: var(--faint); letter-spacing: 0.05em; }
+.tips b { opacity: 0.4; font-weight: 400; }
+.credit { text-align: center; margin-top: 6px; font-size: 9px; color: rgba(140, 175, 210, 0.28); letter-spacing: 0.03em; }
+
+/* ---------- gate ---------- */
+#portraitGate {
+  display: none; position: absolute; inset: 0; z-index: 50;
+  background: rgba(4, 9, 16, 0.94); backdrop-filter: blur(20px);
+  flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  font-size: 15px; letter-spacing: 0.06em;
+}
+#portraitGate .gate-icon { font-size: 44px; color: var(--cyan); animation: spin 3s linear infinite; }
+#portraitGate small { font-size: 11px; color: var(--muted); }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 1100px) {
+  .axis-legend { display: none; }
+  .brand h1 { font-size: 26px; }
+  .controls { width: 186px; }
+}
+@media (max-width: 780px) {
+  .topbar { padding: 18px 18px 0; }
+  .brand .sub { display: none; }
+  .brand h1 { font-size: 20px; margin: 8px 0 0; }
+  .readout { width: 168px; padding: 10px 12px; }
+  .huge { font-size: 30px; }
+  .readout-meta { font-size: 8px; }
+  .controls { right: 14px; top: auto; bottom: 190px; transform: none; width: 158px; padding: 10px; }
+  .angle-box, .divider, .lang { display: none; }
+  .bottom { padding: 0 14px 10px; }
+  #curve { height: 70px; }
+  .tips, .credit { display: none; }
+  .curve-title { font-size: 9px; }
+}
+@media (orientation: portrait) and (max-width: 900px) {
+  #portraitGate { display: flex; }
+}
+
+
+/* ================= 手机 / 平板 / 桌面通用增强 ================= */
+html, body { overscroll-behavior: none; }
+@supports (height: 100dvh) { html, body, #app { height: 100dvh; } }
+.topbar {
+  padding: max(28px, env(safe-area-inset-top)) max(34px, env(safe-area-inset-right)) 0 max(34px, env(safe-area-inset-left));
+}
+.bottom { padding-bottom: max(18px, env(safe-area-inset-bottom)); }
+#scene, #curve { touch-action: none; -webkit-tap-highlight-color: transparent; }
+button, .btn, .switch { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+
+/* 轻提示：竖屏不再阻断画面 */
+#rotateHint {
+  display: none; position: absolute; z-index: 60; left: 50%;
+  transform: translateX(-50%);
+  top: calc(env(safe-area-inset-top) + 112px);
+  align-items: center; gap: 8px; padding: 9px 12px;
+  border-radius: 999px; font-size: 10px; letter-spacing: 0.03em;
+  color: rgba(220, 240, 255, 0.88); white-space: nowrap;
+  max-width: calc(100% - 24px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+#rotateHint.hide { opacity: 0; transform: translate(-50%, -10px); pointer-events: none; }
+#rotateHint .hint-ico { font-size: 15px; color: var(--cyan); line-height: 1; }
+#hintClose {
+  border: 0; background: transparent; color: var(--faint);
+  font-size: 16px; line-height: 1; padding: 0 2px 2px 4px; cursor: pointer;
+}
+#hintClose:active { color: var(--cyan); }
+
+/* 触屏设备：放大点击热区 */
+@media (pointer: coarse) {
+  .btn { min-height: 38px; }
+  .btn.sm { min-height: 34px; }
+  .switch { min-height: 38px; }
+  .lang { min-height: 34px; }
+  .switch .track { width: 34px; height: 18px; }
+  .switch .track::after { width: 12px; height: 12px; }
+  .switch input:checked + .track::after { transform: translateX(16px); }
+  .btn:active { transform: scale(0.96); }
+}
+@media (orientation: portrait) and (max-width: 900px) and (pointer: coarse) {
+  #rotateHint { display: flex; }
+}
+
+/* ---- 手机竖屏：控件改编为底部工具条，不再遮挡场景 ---- */
+@media (orientation: portrait) and (max-width: 560px) {
+  .topbar { padding: max(10px, env(safe-area-inset-top)) 10px 0; gap: 8px; align-items: flex-start; }
+  .eyebrow { font-size: 8px; letter-spacing: 0.12em; gap: 6px; }
+  .brand h1 { font-size: 17px; margin: 6px 0 0; letter-spacing: 0.02em; }
+  .brand .sub { display: none; }
+  .readout { width: 128px; padding: 8px 10px; border-radius: 11px; }
+  .readout-top .label { font-size: 7px; }
+  .clock { font-size: 12px; }
+  .huge { font-size: 25px; }
+  .unit { font-size: 9px; }
+  .bar { margin: 8px 0 6px; }
+  .readout-meta { font-size: 7px; }
+  #particleCount, #fps { display: none; }
+  .axis-legend { display: none; }
+
+  .controls {
+    position: absolute; left: 10px; right: 10px; top: auto;
+    bottom: calc(138px + env(safe-area-inset-bottom));
+    transform: none; width: auto; padding: 8px;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  }
+  .ctrl-title, .divider { display: none; }
+  .controls > .btn.primary { flex: 1 1 100%; order: -2; padding: 9px; font-size: 13px; }
+  .btn-row { flex: 1 1 45%; margin: 0; gap: 6px; }
+  .btn-row .btn { flex: 1 1 0; min-height: 36px; padding: 6px 4px; font-size: 10px; }
+  .switch { flex: 0 0 auto; font-size: 10px; padding: 0 4px; min-height: 36px; }
+  .lang { display: inline-flex; align-items: center; justify-content: center; order: 10; flex: 0 0 auto; width: auto; margin: 0 0 0 auto; padding: 4px 9px; min-height: 24px; font-size: 9px; }
+  .angle-box { flex: 0 1 auto; display: flex; justify-content: flex-start; gap: 12px; margin: 0; order: 9; font-size: 9px; }
+  .angle-box > div { gap: 6px; }
+  .angle-box strong { font-size: 11px; }
+
+  .bottom { padding: 0 10px max(8px, env(safe-area-inset-bottom)); }
+  .curve-panel { padding: 8px 10px 4px; border-radius: 11px; }
+  .curve-head { margin-bottom: 2px; gap: 6px; }
+  .curve-title { display: none; }
+  .transport { width: 100%; justify-content: space-between; gap: 5px; }
+  .btn.sm { flex: 1 1 0; min-height: 32px; padding: 5px 6px; font-size: 10px; }
+  #curve { height: 76px; }
+  .tips, .credit { display: none; }
+  #rotateHint { top: calc(env(safe-area-inset-top) + 116px); font-size: 9px; }
+}
+
+/* ---- 手机横屏：紧凑排布，右侧控件与底部曲线互不遮挡 ---- */
+@media (orientation: landscape) and (max-height: 520px) {
+  .topbar { padding: max(8px, env(safe-area-inset-top)) 12px 0; gap: 10px; }
+  .eyebrow, .brand .sub, .axis-legend, .tips, .credit { display: none; }
+  .brand h1 { font-size: 15px; margin: 0; letter-spacing: 0.03em; }
+  .readout { width: 138px; padding: 7px 10px; border-radius: 10px; }
+  .readout-top .label { font-size: 7px; }
+  .clock { font-size: 12px; }
+  .huge { font-size: 23px; }
+  .unit { font-size: 9px; }
+  .bar { margin: 6px 0 5px; }
+  .readout-meta { font-size: 7px; }
+  #particleCount { display: none; }
+
+  .controls {
+    position: absolute; right: max(10px, env(safe-area-inset-right)); left: auto;
+    top: 54%; bottom: auto; transform: translateY(-50%);
+    width: 148px; padding: 9px; display: block;
+  }
+  .ctrl-title, .divider { display: none; }
+  .btn { min-height: 34px; }
+  .btn.primary { padding: 8px; font-size: 12px; }
+  .btn-row { margin-top: 6px; gap: 6px; }
+  .btn-row .btn { padding: 6px 3px; min-height: 32px; font-size: 10px; }
+  .angle-box { display: grid; gap: 4px; margin-top: 8px; font-size: 9px; }
+  .angle-box strong { font-size: 11px; }
+  .switch { font-size: 10px; padding: 3px 0; min-height: 32px; }
+  .lang { display: block; margin-top: 6px; padding: 6px; width: 100%; min-height: 30px; }
+
+  .bottom { padding: 0 max(168px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)); }
+  .curve-panel { padding: 7px 10px 3px; }
+  .curve-title { font-size: 8px; }
+  .btn.sm { min-height: 28px; padding: 4px 9px; font-size: 9px; }
+  #curve { height: 54px; }
+  #rotateHint { display: none !important; }
+}
+
+
+/* ================= 面板收起 / 展开 ================= */
+#panelToggle {
+  display: inline-flex; align-items: center; gap: 7px;
+  margin-top: 10px; padding: 6px 12px;
+  border: 1px solid rgba(140, 195, 255, 0.22); border-radius: 999px;
+  background: rgba(120, 185, 255, 0.06); color: rgba(215, 238, 255, 0.8);
+  font-family: var(--sans); font-size: 10px; letter-spacing: 0.05em;
+  cursor: pointer; pointer-events: auto;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+#panelToggle:hover { background: rgba(120, 190, 255, 0.16); border-color: rgba(160, 215, 255, 0.46); color: #fff; }
+#panelToggle:active { transform: scale(0.96); }
+#panelToggle .pt-ico { font-size: 14px; line-height: 1; transition: transform 0.35s ease; }
+#panelToggle .pt-show { display: none; }
+.panels-hidden #panelToggle .pt-ico { transform: rotate(180deg); }
+.panels-hidden #panelToggle .pt-hide { display: none; }
+.panels-hidden #panelToggle .pt-show { display: inline; }
+
+.bottom, .controls, .axis-legend {
+  transition: transform 0.4s cubic-bezier(0.22, 0.72, 0.2, 1), opacity 0.3s ease, visibility 0s;
+}
+.panels-hidden .bottom {
+  transform: translateY(115%); opacity: 0; visibility: hidden;
+  transition: transform 0.4s cubic-bezier(0.22, 0.72, 0.2, 1), opacity 0.3s ease, visibility 0s 0.4s;
+}
+.panels-hidden .controls, .panels-hidden .axis-legend {
+  opacity: 0; visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0s 0.3s;
+}
+.panels-hidden .bottom > *, .panels-hidden .controls * { pointer-events: none !important; }
+
+/* 收起后保留的极简浮动操作条 */
+#miniBar {
+  position: absolute; left: 50%; bottom: max(26px, env(safe-area-inset-bottom));
+  z-index: 40; transform: translate(-50%, 14px); opacity: 0; visibility: hidden;
+  pointer-events: none; display: flex; align-items: center; gap: 8px;
+  padding: 7px 9px; border-radius: 999px; white-space: nowrap;
+  transition: transform 0.4s cubic-bezier(0.22, 0.72, 0.2, 1), opacity 0.3s ease, visibility 0s 0.3s;
+}
+.panels-hidden #miniBar {
+  transform: translate(-50%, 0); opacity: 1; visibility: visible; pointer-events: auto;
+  transition: transform 0.4s cubic-bezier(0.22, 0.72, 0.2, 1), opacity 0.3s ease, visibility 0s;
+}
+#miniBar button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 34px; padding: 6px 12px; border-radius: 999px;
+  border: 1px solid rgba(140, 195, 255, 0.2); background: rgba(120, 185, 255, 0.07);
+  color: rgba(220, 240, 255, 0.9); font-family: var(--sans);
+  font-size: 11px; letter-spacing: 0.04em; cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+#miniBar button:hover { background: rgba(120, 190, 255, 0.18); border-color: rgba(160, 215, 255, 0.45); }
+#miniBar button:active { transform: scale(0.95); }
+#miniBar #miniShow { border-color: rgba(143, 211, 255, 0.45); background: rgba(78, 168, 255, 0.16); }
+#miniBar .m-ico { font-size: 15px; line-height: 1; color: var(--cyan); }
+#miniBar .m-ico.up { font-size: 13px; margin-left: 2px; }
+#miniBar .mini-sep { width: 1px; height: 18px; background: var(--line); }
+
+@media (min-width: 1101px) { .axis-legend { top: 176px; } }
+@media (orientation: portrait) and (max-width: 560px) {
+  #panelToggle { margin-top: 8px; padding: 5px 10px; font-size: 9px; min-height: 30px; }
+  #miniBar { bottom: max(20px, env(safe-area-inset-bottom)); gap: 6px; padding: 6px 7px; }
+  #miniBar button { min-height: 32px; padding: 5px 10px; font-size: 10px; }
+}
+@media (orientation: landscape) and (max-height: 520px) {
+  #panelToggle { margin-top: 6px; padding: 4px 9px; font-size: 9px; min-height: 28px; }
+  #miniBar { bottom: max(14px, env(safe-area-inset-bottom)); gap: 6px; padding: 5px 7px; }
+  #miniBar button { min-height: 30px; padding: 4px 10px; font-size: 10px; }
+}
+
+
+/* ================= 显眼的面板开 / 关悬浮按钮 ================= */
+#fabToggle {
+  position: absolute; left: 34px; top: 250px; z-index: 45;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  padding: 0; border: 0; background: transparent; color: rgba(215, 238, 255, 0.85);
+  font-family: var(--sans); cursor: pointer; pointer-events: auto;
+  -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+}
+#fabToggle .fab-disc {
+  display: flex; align-items: center; justify-content: center;
+  width: 54px; height: 54px; border-radius: 50%;
+  border: 1px solid rgba(143, 211, 255, 0.48);
+  background: rgba(12, 28, 48, 0.72);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4), 0 0 18px rgba(78, 168, 255, 0.16), inset 0 1px 0 rgba(190, 225, 255, 0.12);
+  color: var(--cyan);
+  transition: transform 0.2s ease, background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+#fabToggle:hover .fab-disc { background: rgba(28, 62, 100, 0.86); border-color: rgba(180, 230, 255, 0.8); }
+#fabToggle:active .fab-disc { transform: scale(0.92); }
+#fabToggle .fab-disc svg { width: 24px; height: 24px; }
+#fabToggle .fab-label {
+  font-size: 9px; letter-spacing: 0.08em; white-space: nowrap;
+  color: rgba(190, 220, 250, 0.72); text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
+}
+#fabToggle .fab-show { display: none; }
+.panels-hidden #fabToggle .fab-hide { display: none; }
+.panels-hidden #fabToggle .fab-show { display: inline; }
+.panels-hidden #fabToggle svg.fab-show { display: block; }
+.panels-hidden #fabToggle .fab-disc {
+  border-color: rgba(143, 211, 255, 0.85);
+  background: rgba(78, 168, 255, 0.24);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4), 0 0 26px rgba(78, 168, 255, 0.45), inset 0 1px 0 rgba(210, 240, 255, 0.25);
+}
+.panels-hidden #fabToggle .fab-label { color: #d8f0ff; }
+
+@media (orientation: portrait) and (max-width: 560px) {
+  #fabToggle { left: 10px; top: 196px; }
+  #fabToggle .fab-disc { width: 52px; height: 52px; }
+}
+@media (orientation: landscape) and (max-height: 520px) {
+  #fabToggle { left: 12px; top: 100px; }
+  #fabToggle .fab-disc { width: 46px; height: 46px; }
+  #fabToggle .fab-disc svg { width: 21px; height: 21px; }
+}
+@media (min-width: 1101px) {
+  #fabToggle { left: 34px; top: 250px; }
+  #fabToggle .fab-disc { width: 54px; height: 54px; }
+}
+
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="scene"></canvas>
+  <div class="atmosphere"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="eyebrow"><span class="dot"></span> VIBE CODING <span class="sep">/</span> DATA AS WEATHER</div>
+      <h1 data-zh="如果降雨数据变成雨" data-en="When Rainfall Data Becomes Rain">如果降雨数据变成雨</h1>
+      <p class="sub" data-zh="把 00:00 — 24:00 的 25 个逐时降雨数据点，变成一场可以感受的雨" data-en="25 hourly rainfall values, 00:00 to 24:00, turned into rain you can feel">把 00:00 — 24:00 的 25 个逐时降雨数据点，变成一场可以感受的雨</p>
+    </div>
+
+    <div class="readout glass">
+      <div class="readout-top">
+        <span class="label" data-zh="当前时刻 / TIME" data-en="CURRENT TIME">当前时刻 / TIME</span>
+        <span class="mono clock" id="timeValue">18:00</span>
+      </div>
+      <div class="intensity-line">
+        <span class="mono huge" id="intensity">12.6</span>
+        <span class="unit" data-zh="毫米/小时" data-en="mm / hour">毫米/小时</span>
+      </div>
+      <div class="bar"><i id="levelFill"></i></div>
+      <div class="readout-meta">
+        <span id="levelText" class="level">大雨</span>
+        <span class="mono" id="particleCount">0 DROPS</span>
+        <span class="mono" id="fps">60 FPS</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="axis-legend glass">
+    <div class="legend-title" data-zh="坐标 · AXES" data-en="AXES">坐标 · AXES</div>
+    <div><span class="swatch x"></span><span data-zh="X 时间 00:00—24:00" data-en="X time 00:00—24:00">X 时间 00:00—24:00</span></div>
+    <div><span class="swatch y"></span><span data-zh="Y 降雨强度 mm/h" data-en="Y intensity mm/h">Y 降雨强度 mm/h</span></div>
+    <div><span class="swatch z"></span><span data-zh="Z 雨幕深度" data-en="Z rain depth">Z rain depth</span></div>
+  </div>
+
+  <aside class="controls glass">
+    <div class="ctrl-title" data-zh="视角控制 · VIEW" data-en="VIEW CONTROL">视角控制 · VIEW</div>
+    <button class="btn primary" id="rotateBtn"><span class="icon">&#10227;</span><span data-zh="旋转 30°" data-en="Rotate 30°">旋转 30°</span></button>
+    <div class="btn-row">
+      <button class="btn" id="rotateBack">&#10226; &minus;30&deg;</button>
+      <button class="btn" id="resetView" data-zh="重置" data-en="Reset">重置</button>
+    </div>
+    <div class="angle-box">
+      <div><span data-zh="方位角" data-en="Azimuth">方位角</span><strong class="mono" id="yawValue">30&deg;</strong></div>
+      <div><span data-zh="俯仰角" data-en="Elevation">俯仰角</span><strong class="mono" id="pitchValue">30&deg;</strong></div>
+    </div>
+    <div class="divider"></div>
+    <label class="switch"><input type="checkbox" id="autoRotate"><span class="track"></span><span data-zh="自动旋转" data-en="Auto rotate">自动旋转</span></label>
+    <label class="switch"><input type="checkbox" id="soundToggle"><span class="track"></span><span data-zh="雨声" data-en="Rain sound">雨声</span></label>
+    <button class="lang" id="langBtn">EN</button>
+  </aside>
+
+  <footer class="bottom">
+    <div class="curve-panel glass">
+      <div class="curve-head">
+        <div class="curve-title" data-zh="降雨曲线 · 拖动数据点，改写这场雨" data-en="Rainfall curve · drag the dots to reshape the rain">降雨曲线 · 拖动数据点，改写这场雨</div>
+        <div class="transport">
+          <button class="btn sm" id="playBtn"><span id="playIcon">&#10074;&#10074;</span> <span id="playLabel" data-zh="暂停" data-en="Pause">暂停</span></button>
+          <button class="btn sm mono" id="speedBtn">1&times;</button>
+          <button class="btn sm" id="resetData" data-zh="还原数据" data-en="Reset data">还原数据</button>
+        </div>
+      </div>
+      <canvas id="curve"></canvas>
+    </div>
+    <div class="tips">
+      <span data-zh="拖拽画面旋转视角" data-en="Drag to rotate">拖拽画面旋转视角</span><b>&middot;</b>
+      <span data-zh="滚轮缩放" data-en="Scroll to zoom">滚轮缩放</span><b>&middot;</b>
+      <span data-zh="双击重置视角" data-en="Double-click to reset">双击重置视角</span><b>&middot;</b>
+      <span data-zh="← → 每次 30°" data-en="Left / Right arrow: 30°">← → 每次 30°</span>
+    </div>
+    <div class="credit" data-zh="灵感来自 afterimage-lab《Rainform / 数据成雨》 · 本页面为独立实现的致敬作品 · 降雨数据为演示用示例数据" data-en="Inspired by afterimage-lab's Rainform · An independent tribute implementation · Demo rainfall data">灵感来自 afterimage-lab《Rainform / 数据成雨》 · 本页面为独立实现的致敬作品 · 降雨数据为演示用示例数据</div>
+  </footer>
+
+  <div id="rotateHint" class="glass">
+    <span class="hint-ico">&#10227;</span>
+    <span data-zh="竖屏可直接浏览 · 横屏视野更完整" data-en="Portrait works fine · rotate for a wider view">竖屏可直接浏览 · 横屏视野更完整</span>
+    <button id="hintClose" type="button" aria-label="close">&#215;</button>
+  </div>
+</div>
+<script>
+/*
+ * 如果降雨数据变成雨 / When Rainfall Data Becomes Rain
+ * 独立实现的致敬作品：把 25 个逐时降雨数据点变成一场可旋转、可编辑、可聆听的实时粒子雨。
+ * 灵感来自 afterimage-lab《Rainform / 数据成雨》。
+ */
+(() => {
+  'use strict';
+
+  // ------------------------------------------------------------------ data
+  const DEFAULT_DATA = [
+    0.8, 0.5, 0.3, 0.2, 0.4, 0.9, 1.6, 2.3, 3.0, 2.4,
+    3.7, 5.1, 7.6, 9.9, 6.4, 4.2, 5.8, 9.1, 12.6, 14.2,
+    10.3, 7.1, 4.5, 2.6, 1.3
+  ];
+  let data = DEFAULT_DATA.slice();
+
+  const N = 25;
+  const MAX_MM = 20;
+  const H_SCALE = 9;          // 20 mm/h -> 9 world units
+  const D = 9;                // rain curtain depth
+  const HD = D / 2;
+  const X_MIN = -12, X_MAX = 12;
+  const RAD = Math.PI / 180;
+  const MONO = 'SFMono-Regular, Consolas, Menlo, monospace';
+  const CP = { l: 26, r: 14, t: 10, b: 16 };
+
+  const state = {
+    t: 18,
+    playing: true,
+    speedIdx: 1,
+    speeds: [0.5, 1, 2],
+    yaw: 30, pitch: 30,
+    targetYaw: 30, targetPitch: 30,
+    zoom: 1,
+    autoRotate: false,
+    sound: false,
+    lang: 'zh',
+    energy: 0
+  };
+
+  const $ = id => document.getElementById(id);
+  const scene = $('scene'), ctx = scene.getContext('2d');
+  const curveCv = $('curve'), cctx = curveCv.getContext('2d');
+
+  let VW = 0, VH = 0, CW = 0, CH = 0, dpr = 1;
+  let cy = 1, sy = 0, cp = 1, sp = 0, S = 1, OX = 0, OY = 0;
+  let particles = [], ripples = [], splashes = [], foreground = [];
+  // --- simulation state (mirrors the reference shader's look) ---
+  let waterLevel = 0.42, rippleAcc = 0, splashAcc = 0, rainClock = 0, tickAcc = 0;
+  let isLowPower = false;
+  let cum = [], cumTotal = 1;
+  let hoverIdx = -1, dragIdx = -1, draggingCurve = false;
+  let draggingScene = false, lastPX = 0, lastPY = 0;
+  let uiTick = 0, fpsFrames = 0, fpsTime = 0, lastFrame = performance.now();
+  let audio = null;
+
+  const fract = x => x - Math.floor(x);
+  const clamp = (v, a, b) => v < a ? a : (v > b ? b : v);
+  const yOf = v => v / MAX_MM * H_SCALE;
+  const hourToX = h => h - 12;
+  const fmtTime = t => {
+    const h = Math.floor(Math.min(t, 23.999));
+    const m = Math.floor((t - h) * 60);
+    return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+  };
+
+  function valueAt(h) {
+    const x = clamp(h, 0, 24);
+    const i = Math.floor(x);
+    if (i >= 24) return data[24];
+    const f = x - i;
+    return data[i] * (1 - f) + data[i + 1] * f;
+  }
+
+  function levelName(v) {
+    if (state.lang === 'en') {
+      if (v < 0.5) return 'MIST';
+      if (v < 2.5) return 'LIGHT';
+      if (v < 8) return 'MODERATE';
+      if (v < 16) return 'HEAVY';
+      return 'TORRENTIAL';
+    }
+    if (v < 0.5) return '微量';
+    if (v < 2.5) return '小雨';
+    if (v < 8) return '中雨';
+    if (v < 16) return '大雨';
+    return '暴雨';
+  }
+
+  // ------------------------------------------------------------------ setup
+  function resize() {
+    isLowPower = window.innerWidth < 760 ||
+      /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent) ||
+      (navigator.hardwareConcurrency || 8) <= 4;
+    dpr = Math.min(window.devicePixelRatio || 1, isLowPower ? 1.25 : 2);
+    VW = window.innerWidth;
+    VH = window.innerHeight;
+    scene.width = Math.round(VW * dpr);
+    scene.height = Math.round(VH * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    CW = curveCv.clientWidth || 600;
+    CH = curveCv.clientHeight || 96;
+    curveCv.width = Math.round(CW * dpr);
+    curveCv.height = Math.round(CH * dpr);
+    cctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    buildForeground();
+  }
+
+  function buildForeground() {
+    foreground = [];
+    const count = Math.round(clamp(VW / 9, 80, 200));
+    for (let i = 0; i < count; i++) {
+      foreground.push({
+        x: Math.random() * VW, y: Math.random() * VH,
+        l: 6 + Math.random() * 18, s: 240 + Math.random() * 340,
+        a: 0.012 + Math.random() * 0.04
+      });
+    }
+  }
+
+  function updateCamera() {
+    cy = Math.cos(state.yaw * RAD);
+    sy = Math.sin(state.yaw * RAD);
+    cp = Math.cos(state.pitch * RAD);
+    sp = Math.sin(state.pitch * RAD);
+    const portrait = VH > VW * 1.25;
+    S = Math.min(VW / (portrait ? 32 : 36), VH / 20) * state.zoom;
+    OX = VW * 0.5;
+    OY = VH * (portrait ? 0.55 : 0.60);
+  }
+
+  // weak-perspective 3D projection: world (x, y, z) -> screen
+  function P(x, y, z) {
+    const rx = x * cy - z * sy;
+    const rz = x * sy + z * cy;
+    const ry = y * cp - rz * sp;
+    const depth = y * sp + rz * cp;
+    const k = 1 + depth * 0.006;
+    return { x: OX + rx * S * k, y: OY - ry * S * k, d: depth };
+  }
+
+  function seg(a, b, color, width, dash) {
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    if (dash) ctx.setLineDash(dash);
+    ctx.stroke();
+    if (dash) ctx.setLineDash([]);
+  }
+
+  // ------------------------------------------------------------------ particles
+  function rebuildWeights() {
+    cum = [0];
+    for (let i = 0; i < N; i++) cum.push(cum[i] + 0.06 + data[i] * 1.15);
+    cumTotal = cum[N] || 1;
+  }
+
+  function pickHour() {
+    const r = Math.random() * cumTotal;
+    let lo = 0, hi = N;
+    while (lo < hi - 1) {
+      const mid = (lo + hi) >> 1;
+      if (cum[mid] <= r) lo = mid; else hi = mid;
+    }
+    return Math.min(24, lo + Math.random());
+  }
+
+  // Each strand carries its own height feather, brightness, wind phase and
+  // activity, so a column has a soft top edge instead of a hard lid.
+  function spawn(p) {
+    const h = pickHour();
+    const mmh = valueAt(h);
+    const n = clamp(mmh / 20, 0, 1);
+    p.h = h;
+    p.mmh = mmh;
+    p.z = (Math.random() - 0.5) * D;
+    p.feather = 0.84 + Math.random() * 0.16;
+    p.top = 0.75 + yOf(mmh) * 0.9 * p.feather;
+    p.y = Math.random() * p.top;                       // strands fill the whole column
+    p.vy = (7.5 + mmh * 0.6) * (0.86 + Math.random() * 0.3);
+    p.len = (0.18 + n * 0.87 + Math.max(0, mmh - 20) * 0.012) *
+            (0.72 + Math.random() * 0.56);
+    p.strand = 0.68 + 0.64 * fract(Math.random() * 37 + Math.random() * 11);
+    p.bright = Math.random();
+    p.phase = Math.random() * Math.PI * 2;
+    p.active = Math.random() < (0.12 + 0.88 * n);      // density follows the data
+  }
+
+  function spawnRipple() {
+    const h = pickHour();
+    ripples.push({
+      h, z: (Math.random() - 0.5) * D * 0.72, age: 0,
+      life: 0.65 + Math.random() * 0.6,
+      size: 0.25 + Math.random() * 0.55 + Math.min(valueAt(h), 20) * 0.012
+    });
+  }
+
+  function spawnSplash() {
+    const h = pickHour();
+    splashes.push({
+      h, z: (Math.random() - 0.5) * D * 0.72, age: 0,
+      life: 0.3 + Math.random() * 0.3,
+      scale: 0.34 + Math.random() * 0.62 + Math.min(valueAt(h), 20) * 0.018
+    });
+  }
+
+  function updateParticles(dt) {
+    rainClock += dt;
+    let sum = 0;
+    for (let i = 0; i < N; i++) sum += data[i];
+    const mean = sum / N;
+    // ground water grows with the average rainfall, then eases toward it
+    const targetWater = clamp(0.12 + mean / 11, 0, 1);
+    waterLevel += (targetWater - waterLevel) * Math.min(1, dt * 1.2);
+
+    const base = isLowPower ? 1300 : 3400;
+    const span = isLowPower ? 1100 : 2600;
+    const target = Math.round(base + clamp(state.energy, 0, MAX_MM) / MAX_MM * span);
+    if (particles.length < target) {
+      const add = Math.min(140, target - particles.length);
+      for (let i = 0; i < add; i++) { const p = {}; spawn(p); particles.push(p); }
+    } else if (particles.length > target) {
+      particles.length = Math.max(target, particles.length - 140);
+    }
+
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+      p.y -= p.vy * dt;
+      if (p.y <= 0) spawn(p);
+    }
+
+    // impact rings and splashes are spawned by rainfall-weighted accumulators
+    const rippleLimit = isLowPower ? 70 : 190;
+    rippleAcc += dt * (1.2 + sum * 0.52);
+    while (rippleAcc >= 1) {
+      rippleAcc -= 1;
+      if (ripples.length < rippleLimit) spawnRipple();
+    }
+    const splashLimit = isLowPower ? 40 : 120;
+    splashAcc += dt * (1.0 + sum * 1.1);
+    while (splashAcc >= 1) {
+      splashAcc -= 1;
+      if (splashes.length < splashLimit) spawnSplash();
+    }
+
+    for (let i = ripples.length - 1; i >= 0; i--) {
+      ripples[i].age += dt;
+      if (ripples[i].age >= ripples[i].life) ripples.splice(i, 1);
+    }
+    for (let i = splashes.length - 1; i >= 0; i--) {
+      splashes[i].age += dt;
+      if (splashes[i].age >= splashes[i].life) splashes.splice(i, 1);
+    }
+  }
+
+  // ------------------------------------------------------------------ scene drawing
+  function drawBackground(intensity) {
+    const g = ctx.createRadialGradient(VW * 0.5, VH * 0.30, 0, VW * 0.5, VH * 0.30, Math.max(VW, VH) * 0.56);
+    g.addColorStop(0, 'rgba(58, 122, 190, ' + (0.05 + intensity / MAX_MM * 0.07).toFixed(3) + ')');
+    g.addColorStop(1, 'rgba(4, 8, 15, 0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, VW, VH);
+
+    let ph = 0, pv = 0;
+    for (let i = 0; i < N; i++) if (data[i] > pv) { pv = data[i]; ph = i; }
+    const t = P(hourToX(ph), yOf(pv) * 0.5, 0);
+    const glow = ctx.createRadialGradient(t.x, t.y, 0, t.x, t.y, Math.max(120, 210 * state.zoom));
+    glow.addColorStop(0, 'rgba(90, 175, 255, ' + (0.05 + pv / MAX_MM * 0.10).toFixed(3) + ')');
+    glow.addColorStop(1, 'rgba(60, 130, 220, 0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(t.x - 260, t.y - 260, 520, 520);
+  }
+
+  function drawGround() {
+    const a = P(X_MIN, 0, -HD), b = P(X_MAX, 0, -HD);
+    const c = P(X_MAX, 0, HD), d = P(X_MIN, 0, HD);
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.lineTo(c.x, c.y); ctx.lineTo(d.x, d.y);
+    ctx.closePath();
+    const ys = [a.y, b.y, c.y, d.y];
+    const g = ctx.createLinearGradient(0, Math.min.apply(null, ys), 0, Math.max.apply(null, ys));
+    g.addColorStop(0, 'rgba(20, 48, 80, 0.48)');
+    g.addColorStop(1, 'rgba(8, 24, 44, 0.16)');
+    ctx.fillStyle = g;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(130, 195, 255, 0.16)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    for (let h = 0; h <= 24; h++) {
+      const p1 = P(hourToX(h), 0, -HD), p2 = P(hourToX(h), 0, HD);
+      seg(p1, p2, h % 6 === 0 ? 'rgba(130, 195, 255, 0.20)' : 'rgba(120, 180, 240, 0.065)', 1);
+    }
+    for (let i = 0; i <= 6; i++) {
+      const z = -HD + i * D / 6;
+      seg(P(X_MIN, 0, z), P(X_MAX, 0, z), 'rgba(120, 180, 240, 0.075)', 1);
+    }
+    // moving highlight of "now" on the water surface
+    const hx = hourToX(state.t);
+    seg(P(hx, 0.01, -HD), P(hx, 0.01, HD), 'rgba(150, 215, 255, 0.22)', 1.4);
+  }
+
+  // Ground light pools + grazing sheen + tiny specular sparkles.
+  // The pool opacity is driven by the accumulated surface water.
+  function drawWetGround(now) {
+    const t = now * 0.001;
+    const wet = 0.24 + waterLevel * 0.76;
+    const step = isLowPower ? 2 : 1;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < N; i += step) {
+      const v = (data[i] * 2 + data[Math.max(i - 1, 0)] + data[Math.min(i + 1, N - 1)]) / 4;
+      const n = clamp(v / 20, 0, 1);
+      const c = P(hourToX(i), 0.015, 0);
+      const rx = Math.max(18, 52 * state.zoom), ry = Math.max(6, 17 * state.zoom);
+      const pulse = 0.78 + 0.22 * Math.sin(t * (2 + n * 2) + i * 1.7);
+      const a = (0.055 + n * 0.14) * wet * pulse * (isLowPower ? 1.35 : 1);
+      ctx.save();
+      ctx.translate(c.x, c.y);
+      ctx.scale(1, ry / rx);
+      const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
+      g.addColorStop(0, 'rgba(120, 186, 230, ' + a.toFixed(3) + ')');
+      g.addColorStop(0.45, 'rgba(88, 150, 205, ' + (a * 0.42).toFixed(3) + ')');
+      g.addColorStop(1, 'rgba(60, 120, 180, 0)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(0, 0, rx, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+      if (n > 0.12) {
+        ctx.beginPath();
+        ctx.moveTo(c.x - rx * 0.62, c.y);
+        ctx.lineTo(c.x + rx * 0.62, c.y);
+        ctx.strokeStyle = 'rgba(150, 208, 248, ' + (n * 0.10 * wet).toFixed(3) + ')';
+        ctx.lineWidth = 1.1;
+        ctx.stroke();
+      }
+      if (!isLowPower) {
+        for (let k = 0; k < 3; k++) {
+          const seed = fract(Math.sin(i * 12.9898 + k * 78.233) * 43758.5453);
+          const s2 = fract(Math.sin(i * 39.346 + k * 11.135) * 24634.6345);
+          const tw = Math.pow(Math.max(0, Math.sin(t * 3.1 + seed * 6.28)), 12);
+          if (tw < 0.05) continue;
+          ctx.fillStyle = 'rgba(190, 230, 255, ' +
+            (tw * (0.10 + n * 0.24) * wet).toFixed(3) + ')';
+          ctx.fillRect(c.x + (seed - 0.5) * rx * 1.5,
+                       c.y + (s2 - 0.5) * ry * 1.2, 1.4, 1.4);
+        }
+      }
+    }
+    ctx.restore();
+  }
+
+  // Expanding ring + a bright impact dot at the moment the drop lands.
+  function drawRipples() {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (const r of ripples) {
+      const a = clamp(r.age / r.life, 0, 1);
+      const fade = Math.pow(1 - a, 1.9);
+      const rad = r.size * (0.18 + a * 0.82);
+      ctx.beginPath();
+      for (let i = 0; i <= 22; i++) {
+        const ang = i / 22 * Math.PI * 2;
+        const p = P(hourToX(r.h) + Math.cos(ang) * rad, 0.02, r.z + Math.sin(ang) * rad);
+        if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+      }
+      ctx.closePath();
+      ctx.strokeStyle = 'rgba(150, 210, 245, ' +
+        (fade * (isLowPower ? 0.38 : 0.26)).toFixed(3) + ')';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      if (a < 0.3) {
+        const c = P(hourToX(r.h), 0.03, r.z);
+        const k = 1 - a / 0.3;
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, k * 3.2 * state.zoom + 0.6, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(200, 240, 255, ' + (k * 0.42 * (1 - a)).toFixed(3) + ')';
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+
+  // Upward water crowns; the base flares out as the splash rises.
+  function drawSplashes() {
+    const B = [[], [], []];
+    for (const s of splashes) {
+      const a = clamp(s.age / s.life, 0, 1);
+      const fade = Math.pow(1 - a, 1.7);
+      const rise = 1 - Math.pow(1 - a, 2.4);
+      const sc = s.scale * (0.18 + rise * 1.05);
+      const base = P(hourToX(s.h), 0.02, s.z);
+      const spread = 0.16 * s.scale * (0.4 + rise * 1.25);
+      const q = clamp(Math.floor(fade * 3), 0, 2);
+      for (let k = -1; k <= 1; k++) {
+        const top = P(hourToX(s.h) + k * spread, sc * 0.62, s.z + k * 0.05);
+        B[q].push(base.x, base.y, top.x, top.y);
+      }
+    }
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 3; i++) {
+      const s = B[i];
+      if (!s.length) continue;
+      ctx.beginPath();
+      for (let j = 0; j < s.length; j += 4) {
+        ctx.moveTo(s[j], s[j + 1]); ctx.lineTo(s[j + 2], s[j + 3]);
+      }
+      ctx.strokeStyle = 'rgba(168, 216, 248, ' +
+        ((0.10 + i * 0.11) * (isLowPower ? 1.4 : 1)).toFixed(3) + ')';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawCeiling() {
+    const steps = 48;
+    for (let i = 0; i < steps; i++) {
+      const h0 = i / steps * 24, h1 = (i + 1) / steps * 24;
+      const y0 = yOf(valueAt(h0)), y1 = yOf(valueAt(h1));
+      const v = (valueAt(h0) + valueAt(h1)) * 0.5;
+      const p1 = P(hourToX(h0), y0, -HD), p2 = P(hourToX(h1), y1, -HD);
+      const p3 = P(hourToX(h1), y1, HD), p4 = P(hourToX(h0), y0, HD);
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
+      ctx.lineTo(p3.x, p3.y); ctx.lineTo(p4.x, p4.y); ctx.closePath();
+      ctx.fillStyle = 'rgba(96, 178, 255, ' + (0.012 + v / MAX_MM * 0.052).toFixed(3) + ')';
+      ctx.fill();
+    }
+    for (const z of [-HD, HD]) {
+      ctx.beginPath();
+      for (let i = 0; i <= 96; i++) {
+        const h = i / 96 * 24;
+        const p = P(hourToX(h), yOf(valueAt(h)), z);
+        if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+      }
+      ctx.strokeStyle = 'rgba(140, 205, 255, 0.30)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    for (let h = 0; h <= 24; h += 2) {
+      seg(P(hourToX(h), yOf(valueAt(h)), -HD), P(hourToX(h), yOf(valueAt(h)), HD),
+        'rgba(120, 190, 250, 0.10)', 1);
+    }
+  }
+
+  function drawCurtain() {
+    const start = P(X_MIN, 0, 0);
+    ctx.beginPath();
+    ctx.moveTo(start.x, start.y);
+    for (let i = 0; i <= 96; i++) {
+      const h = i / 96 * 24;
+      const p = P(hourToX(h), yOf(valueAt(h)), 0);
+      ctx.lineTo(p.x, p.y);
+    }
+    const end = P(X_MAX, 0, 0);
+    ctx.lineTo(end.x, end.y);
+    ctx.closePath();
+    const g = ctx.createLinearGradient(0, OY - H_SCALE * S, 0, OY + 70);
+    g.addColorStop(0, 'rgba(92, 176, 255, 0.15)');
+    g.addColorStop(1, 'rgba(52, 120, 200, 0.012)');
+    ctx.fillStyle = g;
+    ctx.fill();
+  }
+
+  // A strand is split into 3 segments so the head is bright and the tail
+  // fades out, the same pow(1-t, 1.35) falloff the reference uses in GLSL.
+  // Segments are quantised into alpha buckets and stroked in batches.
+  function drawParticles() {
+    const LV = 10;
+    const B = [], R = [];
+    for (let i = 0; i < LV; i++) B.push([]);
+    for (let i = 0; i < 4; i++) R.push([]);
+    const t = rainClock;
+    const vis = isLowPower ? 1.6 : 1;    // fewer strands on phones -> brighter each
+    const push = (arr, x1, y1, x2, y2, a) => {
+      const q = clamp(Math.round(a * (arr.length - 1)), 0, arr.length - 1);
+      arr[q].push(x1, y1, x2, y2);
+    };
+
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+      if (!p.active) continue;
+      const u = p.y / p.top;
+      // soft fade at both the ground end and the feathered column top
+      const vFade = clamp(u / 0.16, 0, 1) * (1 - clamp((u - 0.74) / 0.26, 0, 1));
+      if (vFade <= 0.02) continue;
+      const dFade = p.z < -D / 6 ? 0.55 : (p.z > D / 6 ? 1.0 : 0.78);
+      const sel = Math.abs(p.h - state.t) < 0.55 ? 1.35 : 1;
+      const base = (0.11 + p.mmh * 0.012) * vFade * dFade * p.strand * sel;
+      const wind = Math.sin(t * 0.55 + p.phase) * 0.03 +
+                   Math.sin(t * 0.21 + p.phase * 1.7) * 0.012;
+      const x = hourToX(p.h) + wind;
+      const head = P(x, p.y, p.z);
+      const tail = P(x + 0.02, p.y + p.len, p.z);
+      const dx = tail.x - head.x, dy = tail.y - head.y;
+      const s1x = head.x + dx * 0.38, s1y = head.y + dy * 0.38;
+      const s2x = head.x + dx * 0.72, s2y = head.y + dy * 0.72;
+      const k = base * 2.9 * vis;
+      push(B, head.x, head.y, s1x, s1y, k);
+      push(B, s1x, s1y, s2x, s2y, k * 0.42);
+      push(B, s2x, s2y, tail.x, tail.y, k * 0.14);
+
+      // flattened, low-saturation mirror strand on the wet ground
+      if ((i & 1) === 0) {
+        const ry = -p.y * 0.3 - 0.055;
+        const rx = x + Math.sin(ry * 18 + t * 1.4 + p.phase) * 0.035;
+        const rh = P(rx, ry, p.z);
+        const rt = P(rx, ry - p.len * 0.3, p.z);
+        const ra = base * (0.16 + waterLevel * 0.24) * 4.2 * vis;
+        push(R, rh.x, rh.y, rt.x, rt.y, ra);
+      }
+    }
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < R.length; i++) {
+      const s = R[i];
+      if (!s.length) continue;
+      ctx.beginPath();
+      for (let j = 0; j < s.length; j += 4) {
+        ctx.moveTo(s[j], s[j + 1]); ctx.lineTo(s[j + 2], s[j + 3]);
+      }
+      ctx.strokeStyle = 'rgba(88, 145, 190, ' +
+        (((i + 0.5) / R.length) * 0.40).toFixed(3) + ')';
+      ctx.lineWidth = 0.8;
+      ctx.stroke();
+    }
+    for (let i = 0; i < LV; i++) {
+      const s = B[i];
+      if (!s.length) continue;
+      ctx.beginPath();
+      for (let j = 0; j < s.length; j += 4) {
+        ctx.moveTo(s[j], s[j + 1]); ctx.lineTo(s[j + 2], s[j + 3]);
+      }
+      const q = (i + 0.5) / LV;
+      ctx.strokeStyle = 'rgba(' + Math.round(128 + 82 * q) + ', ' +
+        Math.round(178 + 62 * q) + ', ' + Math.round(225 + 30 * q) + ', ' +
+        (q * 0.62).toFixed(3) + ')';
+      ctx.lineWidth = q > 0.66 ? 1.0 : 0.8;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawWaterfall(now) {
+    let ph = 0, pv = 0;
+    for (let i = 0; i < N; i++) if (data[i] > pv) { pv = data[i]; ph = i; }
+    if (pv < 5) return;
+    const y = yOf(pv);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 96; i++) {
+      const seed = i * 0.6180339887;
+      const h = ph + (fract(seed) - 0.5) * 1.2;
+      const z = (fract(seed * 7.31) - 0.5) * D * 0.82;
+      const phase = fract(seed * 13.7 + now * 0.00055 * (1 + fract(seed * 3.1)));
+      const y0 = y * (1 - phase);
+      const a = P(hourToX(h), y0, z);
+      const b = P(hourToX(h), Math.max(0, y0 - y * 0.22), z);
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+      ctx.strokeStyle = 'rgba(170, 225, 255, ' + (0.05 + 0.16 * fract(seed * 5.71)).toFixed(3) + ')';
+      ctx.lineWidth = 0.9;
+      ctx.stroke();
+    }
+    const g = P(hourToX(ph), 0, 0);
+    const rg = ctx.createRadialGradient(g.x, g.y, 0, g.x, g.y, 70 * state.zoom);
+    rg.addColorStop(0, 'rgba(150, 215, 255, ' + (pv / MAX_MM * 0.22).toFixed(3) + ')');
+    rg.addColorStop(1, 'rgba(120, 190, 255, 0)');
+    ctx.fillStyle = rg;
+    ctx.fillRect(g.x - 90, g.y - 90, 180, 180);
+    ctx.restore();
+  }
+
+  function drawCurveLine() {
+    for (const z of [-HD, HD]) {
+      ctx.beginPath();
+      for (let i = 0; i <= 120; i++) {
+        const h = i / 120 * 24;
+        const p = P(hourToX(h), yOf(valueAt(h)), z);
+        if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+      }
+      ctx.strokeStyle = 'rgba(140, 205, 255, 0.34)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    ctx.save();
+    ctx.shadowColor = 'rgba(120, 200, 255, 0.85)';
+    ctx.shadowBlur = 18;
+    ctx.beginPath();
+    for (let i = 0; i <= 120; i++) {
+      const h = i / 120 * 24;
+      const p = P(hourToX(h), yOf(valueAt(h)), 0);
+      if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+    }
+    ctx.strokeStyle = 'rgba(190, 232, 255, 0.95)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.restore();
+    for (let i = 0; i < N; i++) {
+      const p = P(hourToX(i), yOf(data[i]), 0);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 2.1, 0, Math.PI * 2);
+      ctx.fillStyle = '#e2f5ff';
+      ctx.fill();
+    }
+  }
+
+  function drawTimeMarker() {
+    const h = state.t, v = valueAt(h), y = yOf(v);
+    const top = P(hourToX(h), y, 0), bot = P(hourToX(h), 0, 0);
+    seg(top, bot, 'rgba(180, 230, 255, 0.42)', 1, [4, 5]);
+    ctx.beginPath();
+    for (let i = 0; i <= 24; i++) {
+      const a = i / 24 * Math.PI * 2;
+      const p = P(hourToX(h) + Math.cos(a) * 0.55, 0.02, Math.sin(a) * 0.55);
+      if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+    }
+    ctx.strokeStyle = 'rgba(190, 235, 255, 0.7)';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(top.x, top.y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(225, 248, 255, 0.95)';
+    ctx.shadowColor = 'rgba(140, 215, 255, 0.9)';
+    ctx.shadowBlur = 16;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.font = '11px ' + MONO;
+    ctx.textBaseline = 'bottom';
+    if (top.x > VW - 190) { ctx.textAlign = 'right'; ctx.fillText(fmtTime(h) + '  ' + v.toFixed(1), top.x - 10, top.y - 8); }
+    else { ctx.textAlign = 'left'; ctx.fillText(fmtTime(h) + '  ' + v.toFixed(1), top.x + 10, top.y - 8); }
+    ctx.fillStyle = 'rgba(205, 238, 255, 0.85)';
+    ctx.strokeStyle = 'rgba(205, 238, 255, 0.85)';
+  }
+
+  function drawAxes() {
+    const zF = HD + 0.85;
+    ctx.font = '10px ' + MONO;
+    ctx.lineWidth = 1;
+    // X axis (time)
+    seg(P(X_MIN, 0, zF), P(X_MAX, 0, zF), 'rgba(127, 208, 255, 0.36)', 1);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = 'rgba(150, 195, 235, 0.50)';
+    for (let h = 0; h <= 24; h++) {
+      const p = P(hourToX(h), 0, zF);
+      if (h % 6 === 0) {
+        seg(p, P(hourToX(h), 0, zF + 0.35), 'rgba(127, 208, 255, 0.32)', 1);
+        ctx.fillText(String(h).padStart(2, '0') + ':00', p.x, p.y + 12);
+      } else {
+        seg(p, P(hourToX(h), 0, zF + 0.18), 'rgba(127, 208, 255, 0.16)', 1);
+      }
+    }
+    // Y axis (intensity)
+    const yBase = P(X_MIN - 0.55, 0, zF), yTop = P(X_MIN - 0.55, H_SCALE, zF);
+    seg(yBase, yTop, 'rgba(167, 233, 200, 0.34)', 1);
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(167, 220, 200, 0.48)';
+    for (const v of [0, 5, 10, 15, 20]) {
+      const p = P(X_MIN - 0.55, yOf(v), zF);
+      seg(p, P(X_MIN - 0.3, yOf(v), zF), 'rgba(167, 233, 200, 0.28)', 1);
+      ctx.fillText(String(v), p.x - 6, p.y);
+    }
+    // Z axis (depth)
+    seg(P(X_MIN, 0, -HD), P(X_MIN, 0, HD), 'rgba(184, 167, 255, 0.26)', 1, [3, 5]);
+    const zp = P(X_MIN, 0, -HD);
+    ctx.textAlign = 'left';
+    ctx.fillStyle = 'rgba(184, 167, 255, 0.42)';
+    ctx.fillText(state.lang === 'zh' ? '雨幕深度' : 'DEPTH', zp.x + 6, zp.y - 10);
+  }
+
+  function drawForeground(dt) {
+    ctx.lineWidth = 0.7;
+    const speed = 0.55 + state.energy / MAX_MM;
+    for (const d of foreground) {
+      d.y += d.s * dt * speed;
+      if (d.y > VH + 30) { d.y = -30; d.x = Math.random() * VW; }
+      ctx.beginPath();
+      ctx.moveTo(d.x, d.y);
+      ctx.lineTo(d.x + 2, d.y + d.l);
+      ctx.strokeStyle = 'rgba(190, 225, 255, ' + d.a.toFixed(3) + ')';
+      ctx.stroke();
+    }
+  }
+
+  // ------------------------------------------------------------------ curve editor
+  function editorX(i) { return CP.l + (i / 24) * (CW - CP.l - CP.r); }
+  function editorY(v) { return CH - CP.b - (v / MAX_MM) * (CH - CP.t - CP.b); }
+
+  function drawCurveEditor() {
+    cctx.clearRect(0, 0, CW, CH);
+    cctx.lineWidth = 1;
+    cctx.font = '9px ' + MONO;
+    for (const v of [0, 5, 10, 15, 20]) {
+      const y = editorY(v);
+      cctx.beginPath(); cctx.moveTo(CP.l, y); cctx.lineTo(CW - CP.r, y);
+      cctx.strokeStyle = 'rgba(130, 190, 245, 0.09)'; cctx.stroke();
+      cctx.fillStyle = 'rgba(140, 185, 225, 0.35)';
+      cctx.textAlign = 'left'; cctx.textBaseline = 'middle';
+      cctx.fillText(String(v), 2, y);
+    }
+    cctx.textAlign = 'center'; cctx.textBaseline = 'top';
+    cctx.fillStyle = 'rgba(140, 185, 225, 0.32)';
+    for (const h of [0, 6, 12, 18, 24]) cctx.fillText(String(h).padStart(2, '0') + ':00', editorX(h), CH - CP.b + 3);
+
+    cctx.beginPath();
+    cctx.moveTo(editorX(0), editorY(0));
+    for (let i = 0; i < N; i++) cctx.lineTo(editorX(i), editorY(data[i]));
+    cctx.lineTo(editorX(24), editorY(0));
+    cctx.closePath();
+    const g = cctx.createLinearGradient(0, CP.t, 0, CH - CP.b);
+    g.addColorStop(0, 'rgba(110, 195, 255, 0.30)');
+    g.addColorStop(1, 'rgba(60, 130, 210, 0.02)');
+    cctx.fillStyle = g; cctx.fill();
+
+    cctx.save();
+    cctx.shadowColor = 'rgba(110, 190, 255, 0.7)';
+    cctx.shadowBlur = 8;
+    cctx.beginPath();
+    for (let i = 0; i < N; i++) {
+      if (i === 0) cctx.moveTo(editorX(i), editorY(data[i]));
+      else cctx.lineTo(editorX(i), editorY(data[i]));
+    }
+    cctx.strokeStyle = 'rgba(165, 226, 255, 0.95)';
+    cctx.lineWidth = 1.6;
+    cctx.stroke();
+    cctx.restore();
+
+    for (let i = 0; i < N; i++) {
+      const active = i === hoverIdx || i === dragIdx;
+      cctx.beginPath();
+      cctx.arc(editorX(i), editorY(data[i]), active ? 4.2 : 2.4, 0, Math.PI * 2);
+      cctx.fillStyle = active ? '#ffffff' : 'rgba(205, 239, 255, 0.85)';
+      cctx.fill();
+    }
+
+    const cx = editorX(state.t);
+    cctx.setLineDash([3, 4]);
+    cctx.beginPath(); cctx.moveTo(cx, CP.t - 2); cctx.lineTo(cx, CH - CP.b);
+    cctx.strokeStyle = 'rgba(255, 255, 255, 0.45)'; cctx.lineWidth = 1; cctx.stroke();
+    cctx.setLineDash([]);
+    cctx.beginPath();
+    cctx.arc(cx, editorY(valueAt(state.t)), 3, 0, Math.PI * 2);
+    cctx.fillStyle = '#ffffff'; cctx.fill();
+
+    if (hoverIdx >= 0) {
+      cctx.font = '10px ' + MONO;
+      cctx.textAlign = hoverIdx > 18 ? 'right' : 'left';
+      cctx.fillStyle = 'rgba(230, 246, 255, 0.9)';
+      cctx.fillText(fmtTime(hoverIdx) + '  ' + data[hoverIdx].toFixed(1) + ' mm',
+        hoverIdx > 18 ? CW - CP.r : CP.l + 4, CP.t + 2);
+    }
+  }
+
+  // ------------------------------------------------------------------ audio
+  function ensureAudio() {
+    if (audio) { if (audio.ctx.state === 'suspended') audio.ctx.resume(); return; }
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    const ac = new AC();
+    const buf = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate);
+    const ch = buf.getChannelData(0);
+    let last = 0;
+    for (let i = 0; i < ch.length; i++) {
+      const w = Math.random() * 2 - 1;
+      last = last * 0.35 + w * 0.65;
+      ch[i] = last * 0.55;
+    }
+    const src = ac.createBufferSource();
+    src.buffer = buf; src.loop = true;
+    const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 180;
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1400; lp.Q.value = 0.4;
+    const gain = ac.createGain(); gain.gain.value = 0;
+    src.connect(hp); hp.connect(lp); lp.connect(gain); gain.connect(ac.destination);
+    src.start();
+    // a second, very short noise buffer gives individual drop impacts
+    const tb = ac.createBuffer(1, Math.round(ac.sampleRate * 0.035), ac.sampleRate);
+    const td = tb.getChannelData(0);
+    for (let i = 0; i < td.length; i++) {
+      td[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / td.length, 3);
+    }
+    const bp = ac.createBiquadFilter(); bp.type = 'bandpass';
+    bp.frequency.value = 2100; bp.Q.value = 0.9;
+    bp.connect(ac.destination);
+    audio = { ctx: ac, gain, lp, tb, bp };
+  }
+
+  function updateAudio(intensity, dt) {
+    if (!audio) return;
+    const v = state.sound ? 0.015 + Math.min(intensity, MAX_MM) / MAX_MM * 0.11 : 0;
+    audio.gain.gain.setTargetAtTime(v, audio.ctx.currentTime, 0.25);
+    audio.lp.frequency.setTargetAtTime(650 + intensity * 95, audio.ctx.currentTime, 0.35);
+    if (!state.sound) return;
+    // faint, rain-rate-dependent impact ticks - the "打在地上" layer
+    tickAcc += (dt || 0) * Math.min(46, 3 + intensity * 2.2);
+    let guard = 0;
+    while (tickAcc >= 1 && guard++ < 3) {
+      tickAcc -= 1;
+      try {
+        const s = audio.ctx.createBufferSource();
+        s.buffer = audio.tb;
+        const g = audio.ctx.createGain();
+        const vol = (0.004 + Math.random() * 0.009) * (0.4 + intensity / MAX_MM);
+        g.gain.value = vol;
+        s.connect(g); g.connect(audio.bp);
+        s.start();
+      } catch (e) { /* audio is a bonus, never break the render loop */ }
+    }
+    if (tickAcc > 3) tickAcc = 3;
+  }
+
+  // ------------------------------------------------------------------ UI
+  function normAngle(a) { return Math.round(((a % 360) + 360) % 360); }
+
+  function updateUI(intensity, dt) {
+    uiTick++;
+    if (uiTick % 4 === 0) {
+      $('timeValue').textContent = fmtTime(state.t);
+      $('intensity').textContent = intensity.toFixed(1);
+      $('levelFill').style.width = (clamp(intensity / MAX_MM, 0, 1) * 100).toFixed(1) + '%';
+      $('levelText').textContent = levelName(intensity);
+      $('particleCount').textContent = particles.length.toLocaleString() + (state.lang === 'zh' ? ' 粒子' : ' DROPS');
+      $('yawValue').textContent = normAngle(state.targetYaw) + '\u00B0';
+      $('pitchValue').textContent = Math.round(state.pitch) + '\u00B0';
+    }
+    fpsFrames++; fpsTime += dt;
+    if (fpsTime > 0.6) {
+      $('fps').textContent = Math.round(fpsFrames / fpsTime) + ' FPS';
+      fpsFrames = 0; fpsTime = 0;
+    }
+  }
+
+  function syncPlayLabel() {
+    $('playIcon').textContent = state.playing ? '\u275A\u275A' : '\u25B6';
+    $('playLabel').textContent = state.playing
+      ? (state.lang === 'zh' ? '暂停' : 'Pause')
+      : (state.lang === 'zh' ? '播放' : 'Play');
+  }
+
+  function applyLang() {
+    document.querySelectorAll('[data-zh]').forEach(el => {
+      const v = state.lang === 'zh' ? el.dataset.zh : el.dataset.en;
+      if (v) el.textContent = v;
+    });
+    $('langBtn').textContent = state.lang === 'zh' ? 'EN' : '中';
+    document.documentElement.lang = state.lang === 'zh' ? 'zh-CN' : 'en';
+    syncPlayLabel();
+    updateUI(valueAt(state.t), 0);
+  }
+
+  function rotateBy(deg) { state.targetYaw += deg; }
+
+  function resetView() {
+    state.targetYaw = 30;
+    state.targetPitch = 30;
+    state.zoom = 1;
+    state.autoRotate = false;
+    $('autoRotate').checked = false;
+  }
+
+  // ------------------------------------------------------------------ events
+  $('rotateBtn').addEventListener('click', () => rotateBy(30));
+  $('rotateBack').addEventListener('click', () => rotateBy(-30));
+  $('resetView').addEventListener('click', resetView);
+  $('autoRotate').addEventListener('change', e => { state.autoRotate = e.target.checked; });
+  $('soundToggle').addEventListener('change', e => {
+    state.sound = e.target.checked;
+    if (state.sound) ensureAudio();
+  });
+  $('langBtn').addEventListener('click', () => {
+    state.lang = state.lang === 'zh' ? 'en' : 'zh';
+    applyLang();
+  });
+  $('playBtn').addEventListener('click', () => { state.playing = !state.playing; syncPlayLabel(); });
+  $('speedBtn').addEventListener('click', () => {
+    state.speedIdx = (state.speedIdx + 1) % state.speeds.length;
+    $('speedBtn').textContent = ['0.5\u00D7', '1\u00D7', '2\u00D7'][state.speedIdx];
+  });
+  $('resetData').addEventListener('click', () => { data = DEFAULT_DATA.slice(); rebuildWeights(); });
+
+  function curvePos(e) {
+    const r = curveCv.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  }
+  function setDataFromPointer(p) {
+    const v = clamp((CH - CP.b - p.y) / (CH - CP.t - CP.b) * MAX_MM, 0, MAX_MM);
+    data[dragIdx] = Math.round(v * 10) / 10;
+    rebuildWeights();
+  }
+  curveCv.addEventListener('pointerdown', e => {
+    const p = curvePos(e);
+    dragIdx = clamp(Math.round((p.x - CP.l) / (CW - CP.l - CP.r) * 24), 0, 24);
+    draggingCurve = true;
+    curveCv.setPointerCapture(e.pointerId);
+    setDataFromPointer(p);
+  });
+  curveCv.addEventListener('pointermove', e => {
+    const p = curvePos(e);
+    if (draggingCurve) { setDataFromPointer(p); return; }
+    hoverIdx = clamp(Math.round((p.x - CP.l) / (CW - CP.l - CP.r) * 24), 0, 24);
+  });
+  curveCv.addEventListener('pointerup', () => { draggingCurve = false; dragIdx = -1; });
+  curveCv.addEventListener('pointercancel', () => { draggingCurve = false; dragIdx = -1; });
+  curveCv.addEventListener('pointerleave', () => { if (!draggingCurve) hoverIdx = -1; });
+
+  scene.addEventListener('pointerdown', e => {
+    draggingScene = true;
+    lastPX = e.clientX; lastPY = e.clientY;
+    scene.setPointerCapture(e.pointerId);
+    scene.classList.add('dragging');
+    state.autoRotate = false;
+    $('autoRotate').checked = false;
+  });
+  scene.addEventListener('pointermove', e => {
+    if (!draggingScene) return;
+    const dx = e.clientX - lastPX, dy = e.clientY - lastPY;
+    lastPX = e.clientX; lastPY = e.clientY;
+    state.yaw += dx * 0.28; state.targetYaw += dx * 0.28;
+    state.pitch = clamp(state.pitch + dy * 0.16, 8, 62);
+    state.targetPitch = state.pitch;
+  });
+  const endSceneDrag = () => { draggingScene = false; scene.classList.remove('dragging'); };
+  scene.addEventListener('pointerup', endSceneDrag);
+  scene.addEventListener('pointercancel', endSceneDrag);
+  scene.addEventListener('dblclick', resetView);
+  scene.addEventListener('wheel', e => {
+    e.preventDefault();
+    state.zoom = clamp(state.zoom - e.deltaY * 0.0009, 0.55, 1.9);
+  }, { passive: false });
+
+  window.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') { rotateBy(30); e.preventDefault(); }
+    else if (e.key === 'ArrowLeft') { rotateBy(-30); e.preventDefault(); }
+    else if (e.code === 'Space') { state.playing = !state.playing; syncPlayLabel(); e.preventDefault(); }
+    else if (e.key === 'r' || e.key === 'R') resetView();
+    else if (e.key === 'a' || e.key === 'A') {
+      state.autoRotate = !state.autoRotate;
+      $('autoRotate').checked = state.autoRotate;
+    }
+  });
+  window.addEventListener('resize', resize);
+
+  // ------------------------------------------------------------------ loop
+  function frame(now) {
+    const dt = Math.min((now - lastFrame) / 1000, 0.05);
+    lastFrame = now;
+
+    if (state.playing) {
+      state.t += dt * state.speeds[state.speedIdx];
+      if (state.t > 24) state.t -= 24;
+    }
+    let sum = 0, peak = 0;
+    for (let i = 0; i < N; i++) { sum += data[i]; if (data[i] > peak) peak = data[i]; }
+    state.energy = (sum / N) * 0.45 + peak * 0.55;
+
+    if (state.autoRotate) { state.targetYaw += dt * 6; state.yaw += dt * 6; }
+    state.yaw += (state.targetYaw - state.yaw) * Math.min(1, dt * 9);
+    state.pitch += (state.targetPitch - state.pitch) * Math.min(1, dt * 9);
+    updateCamera();
+
+    const intensity = valueAt(state.t);
+    updateParticles(dt);
+
+    ctx.clearRect(0, 0, VW, VH);
+    drawBackground(intensity);
+    drawGround();
+    drawWetGround(now);
+    drawCeiling();
+    drawCurtain();
+    drawWaterfall(now);
+    drawParticles();      // includes the wet-ground mirror strands
+    drawRipples();
+    drawSplashes();
+    drawCurveLine();
+    drawTimeMarker();
+    drawAxes();
+    drawForeground(dt);
+    drawCurveEditor();
+    updateUI(intensity, dt);
+    updateAudio(intensity, dt);
+
+    requestAnimationFrame(frame);
+  }
+
+  // ------------------------------------------------------------------ boot
+  resize();
+  rebuildWeights();
+  for (let i = 0; i < (isLowPower ? 900 : 2000); i++) { const p = {}; spawn(p); particles.push(p); }
+  applyLang();
+  syncPlayLabel();
+  requestAnimationFrame(frame);
+})();
+
+</script>
+<script>
+
+/* ============ 触屏交互补丁（独立于主程序，不改变桌面行为） ============ */
+(function () {
+  var sceneEl = document.getElementById('scene');
+  var curveEl = document.getElementById('curve');
+  var hint = document.getElementById('rotateHint');
+  var hintClose = document.getElementById('hintClose');
+  var pinchDist = 0, pinchActive = false, lastTap = 0;
+
+  function hideHint() { if (hint) hint.classList.add('hide'); }
+  if (hintClose) hintClose.addEventListener('click', hideHint);
+  if (hint) { hint.addEventListener('click', hideHint); setTimeout(hideHint, 7000); }
+
+  function dist(t) {
+    return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+  }
+  function inScene(target) { return target === sceneEl || (sceneEl && sceneEl.contains(target)); }
+
+  /* 双指捏合缩放：复用主程序已有的 wheel 缩放逻辑 */
+  window.addEventListener('touchstart', function (e) {
+    if (e.touches.length === 2 && inScene(e.target)) {
+      pinchActive = true;
+      pinchDist = dist(e.touches);
+    }
+  }, { passive: true, capture: true });
+
+  window.addEventListener('touchmove', function (e) {
+    if (!pinchActive || e.touches.length !== 2) return;
+    e.preventDefault();
+    var d = dist(e.touches);
+    var delta = d - pinchDist;
+    pinchDist = d;
+    if (Math.abs(delta) < 0.01) return;
+    try {
+      sceneEl.dispatchEvent(new WheelEvent('wheel', { deltaY: -delta * 2.4, bubbles: true, cancelable: true }));
+    } catch (err) {
+      var ev = document.createEvent('Event');
+      ev.initEvent('wheel', true, true);
+      Object.defineProperty(ev, 'deltaY', { value: -delta * 2.4 });
+      sceneEl.dispatchEvent(ev);
+    }
+  }, { passive: false, capture: true });
+
+  function endPinch(e) {
+    if (!e.touches || e.touches.length < 2) { pinchActive = false; pinchDist = 0; }
+  }
+  window.addEventListener('touchend', endPinch, { passive: true, capture: true });
+  window.addEventListener('touchcancel', endPinch, { passive: true, capture: true });
+
+  /* 双指操作期间暂停单指旋转，避免视角乱跳 */
+  window.addEventListener('pointermove', function (e) {
+    if (pinchActive) e.stopPropagation();
+  }, true);
+  window.addEventListener('pointerdown', function (e) {
+    if (pinchActive) e.stopPropagation();
+  }, true);
+
+  /* 双击画面重置视角（移动端 dblclick 常不触发） */
+  sceneEl.addEventListener('touchend', function (e) {
+    if (pinchActive || (e.touches && e.touches.length > 0)) return;
+    var now = Date.now();
+    if (now - lastTap < 330) {
+      try { sceneEl.dispatchEvent(new MouseEvent('dblclick', { bubbles: true })); }
+      catch (err) { sceneEl.dispatchEvent(new Event('dblclick', { bubbles: true })); }
+      lastTap = 0;
+    } else { lastTap = now; }
+  }, { passive: true });
+
+  /* iOS 双指手势 / 长按菜单 / 双击缩放干扰 */
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach(function (name) {
+    document.addEventListener(name, function (e) { e.preventDefault(); }, { passive: false });
+  });
+  document.addEventListener('contextmenu', function (e) {
+    if (e.target === sceneEl || e.target === curveEl) e.preventDefault();
+  });
+
+  /* 旋屏 / 地址栏收起后重新计算画布尺寸 */
+  window.addEventListener('orientationchange', function () {
+    setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 260);
+    setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 700);
+  });
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', function () {
+      window.dispatchEvent(new Event('resize'));
+    });
+  }
+})();
+
+</script>
+<script>
+
+/* ============ 面板收起 / 展开（独立于主程序） ============ */
+(function () {
+  var app = document.getElementById('app');
+  var brand = document.querySelector('.brand');
+  if (!app || !brand) return;
+
+  var toggle = document.createElement('button');
+  toggle.id = 'panelToggle';
+  toggle.type = 'button';
+  toggle.title = '收起 / 展开下方面板（快捷键 H）';
+  toggle.setAttribute('aria-pressed', 'false');
+  toggle.innerHTML =
+    '<span class="pt-ico">&#8964;</span>' +
+    '<span class="pt-hide" data-zh="收起下方面板" data-en="Hide panels">收起下方面板</span>' +
+    '<span class="pt-show" data-zh="展开下方面板" data-en="Show panels">展开下方面板</span>';
+  brand.appendChild(toggle);
+
+  var bar = document.createElement('div');
+  bar.id = 'miniBar';
+  bar.className = 'glass';
+  bar.innerHTML =
+    '<button id="miniRotate" type="button" title="旋转 30° / Rotate 30°"><span class="m-ico">&#10227;</span><span>30&deg;</span></button>' +
+    '<span class="mini-sep"></span>' +
+    '<button id="miniPlay" type="button" title="播放 / 暂停"><span id="miniPlayIcon">&#10074;&#10074;</span></button>' +
+    '<button id="miniShow" type="button"><span data-zh="显示面板" data-en="Show panels">显示面板</span><span class="m-ico up">&#8963;</span></button>';
+  app.appendChild(bar);
+
+  var rotateBtn = document.getElementById('rotateBtn');
+  var playBtn = document.getElementById('playBtn');
+  var playIcon = document.getElementById('playIcon');
+  var miniPlayIcon = document.getElementById('miniPlayIcon');
+  var isHidden = false;
+
+  function syncMiniPlay() { if (playIcon && miniPlayIcon) miniPlayIcon.textContent = playIcon.textContent; }
+
+  function setPanels(hidden) {
+    isHidden = hidden;
+    app.classList.toggle('panels-hidden', hidden);
+    toggle.setAttribute('aria-pressed', hidden ? 'true' : 'false');
+    toggle.title = hidden ? '展开下方面板（快捷键 H）' : '收起下方面板（快捷键 H）';
+    syncMiniPlay();
+  }
+
+  toggle.addEventListener('click', function () { setPanels(!isHidden); });
+  document.getElementById('miniShow').addEventListener('click', function () { setPanels(false); });
+  document.getElementById('miniRotate').addEventListener('click', function () {
+    if (rotateBtn) rotateBtn.click();
+  });
+  document.getElementById('miniPlay').addEventListener('click', function () {
+    if (playBtn) playBtn.click();
+    syncMiniPlay();
+  });
+  window.addEventListener('keydown', function (e) {
+    if (e.key === 'h' || e.key === 'H') { setPanels(!isHidden); e.preventDefault(); }
+  });
+  syncMiniPlay();
+})();
+
+</script>
+<script>
+
+/* ============ 显眼的面板开 / 关按钮（点一下开，再点一下关） ============ */
+(function () {
+  var app = document.getElementById('app');
+  if (!app) return;
+  var svgHide =
+    '<svg class="fab-ico fab-hide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<rect x="3" y="3.5" width="18" height="17" rx="2.5"/><path d="M3 15h18"/><path d="M9 8.5l3 3 3-3"/></svg>';
+  var svgShow =
+    '<svg class="fab-ico fab-show" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<rect x="3" y="3.5" width="18" height="17" rx="2.5"/><path d="M3 15h18"/><path d="M9 11.5l3-3 3 3"/></svg>';
+  var fab = document.createElement('button');
+  fab.id = 'fabToggle';
+  fab.type = 'button';
+  fab.title = '显示 / 隐藏下方面板';
+  fab.setAttribute('aria-label', '显示或隐藏下方面板');
+  fab.setAttribute('aria-pressed', 'false');
+  fab.innerHTML =
+    '<span class="fab-disc">' + svgHide + svgShow + '</span>' +
+    '<span class="fab-label fab-hide" data-zh="隐藏面板" data-en="Hide panels">隐藏面板</span>' +
+    '<span class="fab-label fab-show" data-zh="显示面板" data-en="Show panels">显示面板</span>';
+  app.appendChild(fab);
+
+  function sync() {
+    var hidden = app.classList.contains('panels-hidden');
+    fab.setAttribute('aria-pressed', hidden ? 'true' : 'false');
+    var t = document.getElementById('panelToggle');
+    if (t) {
+      t.setAttribute('aria-pressed', hidden ? 'true' : 'false');
+      t.title = hidden ? '展开下方面板（快捷键 H）' : '收起下方面板（快捷键 H）';
+    }
+    var pi = document.getElementById('playIcon'), mi = document.getElementById('miniPlayIcon');
+    if (pi && mi) mi.textContent = pi.textContent;
+  }
+
+  fab.addEventListener('click', function () {
+    var t = document.getElementById('panelToggle');
+    if (t) t.click();
+    else app.classList.toggle('panels-hidden');
+    sync();
+  });
+  ['panelToggle', 'miniShow'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('click', function () { setTimeout(sync, 0); });
+  });
+  window.addEventListener('keydown', function (e) {
+    if (e.key === 'h' || e.key === 'H') setTimeout(sync, 0);
+  });
+  sync();
+})();
+
+</script>
+</body>
+</html>
