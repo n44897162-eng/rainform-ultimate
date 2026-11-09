@@ -14,9 +14,9 @@ const BASE = 'http://127.0.0.1:8787/';
 const GATEWAY = 'http://127.0.0.1:8787';
 const ADB = 'F:/Android/Sdk/platform-tools/adb.exe';
 const EMULATOR = 'F:/Android/Sdk/emulator/emulator.exe';
-const APK = path.join(ROOT, 'dist', 'Rainform-Ultimate-v1.0.0.apk');
-const PORTABLE = path.join(ROOT, 'dist', 'Rainform-Ultimate-Portable-1.0.0.exe');
-const SETUP = path.join(ROOT, 'dist', 'Rainform-Ultimate-Setup-1.0.0.exe');
+const APK = path.join(ROOT, 'dist', 'Rainform-Ultimate-v1.1.0.apk');
+const PORTABLE = path.join(ROOT, 'dist', 'Rainform-Ultimate-Portable-1.1.0.exe');
+const SETUP = path.join(ROOT, 'dist', 'Rainform-Ultimate-Setup-1.1.0.exe');
 
 const PW = (() => { try { return require('playwright-core'); } catch (e) { return null; } })();
 
@@ -92,7 +92,7 @@ async function win(rec) {
   if (!PW) throw new Error('playwright-core is not installed');
 
   const PORT = 9332;
-  /* The WorkBuddy host exports ELECTRON_RUN_AS_NODE=1 and a NODE_OPTIONS
+  /* The host session exports ELECTRON_RUN_AS_NODE=1 and a NODE_OPTIONS
      shim. Inherited by a spawned Electron app those turn it into a plain Node
      process ("bad option: --remote-debugging-port"), so scrub them here.
      End users never have these variables; the packages themselves are fine. */

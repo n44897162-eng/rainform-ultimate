@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-05T17:56:11.062Z",
+  "generatedAt": "2026-11-09T14:52:10.226Z",
   "summary": {
-    "total": 9,
-    "passed": 9,
-    "failed": 0
+    "total": 8,
+    "passed": 6,
+    "failed": 2
   },
   "rows": [
     {
@@ -11,63 +11,56 @@
       "status": "PASS",
       "detail": "21 True 0",
       "severity": "Major",
-      "time": "2026-11-05T17:55:41.920Z"
+      "time": "2026-11-09T14:51:46.999Z"
     },
     {
       "name": "Android APK v1/v2/v3 签名有效",
       "status": "PASS",
       "detail": "Verifies\r | Verified using v1 scheme (JAR signing): true\r | Verified using v2 scheme (APK Signature Scheme v2): true\r | Verified using v3 scheme (APK Signature Scheme v3): true\r",
       "severity": "Critical",
-      "time": "2026-11-05T17:55:42.367Z"
+      "time": "2026-11-09T14:51:47.402Z"
     },
     {
       "name": "Android APK 启动 Activity 与 SDK 范围",
-      "status": "PASS",
-      "detail": "package: name='cn.rainform.ultimate' versionCode='1' versionName='1.0.0' platformBuildVersionName='14' platformBuildVersionCode='34' compileSdkVersion='34' compileSdkVersionCodename='14'",
+      "status": "FAIL",
+      "detail": "",
       "severity": "Critical",
-      "time": "2026-11-05T17:55:42.367Z"
+      "time": "2026-11-09T14:51:47.402Z"
     },
     {
       "name": "静默安装副本与交付 Setup.exe 字节一致",
       "status": "PASS",
-      "detail": "sha256=153a649b55f6a30be9467296…",
+      "detail": "sha256=25aadb9120fd5727c49d909c…",
       "severity": "Critical",
-      "time": "2026-11-05T17:55:42.807Z"
+      "time": "2026-11-09T14:51:48.026Z"
     },
     {
       "name": "Windows Setup.exe 静默安装成功",
       "status": "PASS",
-      "detail": "dir=F:\\Rainform-Ultimate\\tests\\.win-install-1793901341404 ",
+      "detail": "dir=F:\\下载\\项目门户\\_ghrepo\\tests\\.win-install-1794235906501 ",
       "severity": "Critical",
-      "time": "2026-11-05T17:55:50.361Z"
+      "time": "2026-11-09T14:51:54.181Z"
     },
     {
       "name": "Windows 安装包含卸载器与 app.asar",
-      "status": "PASS",
-      "detail": "{\"hasUninstaller\":true,\"hasAsar\":true}",
+      "status": "FAIL",
+      "detail": "{\"hasUninstaller\":false,\"hasAsar\":true}",
       "severity": "Major",
-      "time": "2026-11-05T17:55:50.362Z"
+      "time": "2026-11-09T14:51:54.181Z"
     },
     {
       "name": "Windows 安装版启动后 3D 旋转与数据层可用",
       "status": "PASS",
-      "detail": "{\"rainform\":true,\"weather\":true,\"native\":{},\"scene\":[1787,1002],\"legacy\":false,\"glerr\":false} rot={\"d\":60}",
+      "detail": "{\"rainform\":true,\"weather\":true,\"native\":{},\"scene\":[1790,1002],\"legacy\":false,\"glerr\":false} rot={\"d\":60}",
       "severity": "Critical",
-      "time": "2026-11-05T17:55:56.786Z"
-    },
-    {
-      "name": "Windows 卸载器可静默卸载",
-      "status": "PASS",
-      "detail": "dir=F:\\Rainform-Ultimate\\tests\\.win-install-1793901341404",
-      "severity": "Major",
-      "time": "2026-11-05T17:55:58.045Z"
+      "time": "2026-11-09T14:52:00.224Z"
     },
     {
       "name": "Windows 便携版可启动且功能可用",
       "status": "PASS",
-      "detail": "{\"rainform\":true,\"weather\":true,\"native\":{},\"scene\":[1787,1002],\"legacy\":false,\"glerr\":false} rot={\"d\":60}",
+      "detail": "{\"rainform\":true,\"weather\":true,\"native\":{},\"scene\":[1790,1002],\"legacy\":false,\"glerr\":false} rot={\"d\":60}",
       "severity": "Critical",
-      "time": "2026-11-05T17:56:10.391Z"
+      "time": "2026-11-09T14:52:09.607Z"
     }
   ]
 }

@@ -20,7 +20,7 @@
 | D-05 | Minor | 三端 | 实时天气 | `configure()` 接受未注册 provider id，配置被污染后持续抛异常 | 传入拼写错误的 provider 或 `?weather=` 不存在的源 | 配置层健壮性 | 已修复并复验（F 组 + 非法参数边界） |
 | D-06 | Critical | Windows | 构建 / 交付 | `electron-builder` NSIS 阶段因 winCodeSign 缓存内 macOS 符号链接权限失败，无法产出 exe | 普通 Windows 账户执行 `npm run dist:win` | Windows 端安装包完全无法交付 | 已修复并复验（产出 Setup + Portable，实装冒烟通过） |
 | D-07 | Major | Windows | 构建 / 交付 | NSIS 编译偶发 `failed opening file app.asar`；`/V2` 被 MSYS 转成伪脚本路径 | `app.asar` 刚写完立即调用 makensis | 构建不稳定，偶发失败 | 已修复并复验（连续三次完整构建一次成功） |
-| D-08 | Critical | Windows | 测试环境 | 宿主 `ELECTRON_RUN_AS_NODE=1` + `NODE_OPTIONS` shim 使 Electron 以纯 Node 模式启动，devtools 端点连不上 | WorkBuddy 会话内 `spawn` Electron | Windows 整组契约用例被跳过；用户机器不受影响 | 已修复并复验（Windows 69 项正常执行） |
+| D-08 | Critical | Windows | 测试环境 | 宿主 `ELECTRON_RUN_AS_NODE=1` + `NODE_OPTIONS` shim 使 Electron 以纯 Node 模式启动，devtools 端点连不上 | 宿主会话内 `spawn` Electron | Windows 整组契约用例被跳过；用户机器不受影响 | 已修复并复验（Windows 69 项正常执行） |
 | D-09 | Major | Android / 三端 | 测试框架 | raw CDP 适配器未透传 `awaitPromise`，异步用例返回 `{}`，造成平台间假差异 | Android 端 F10 `register()` | 测试结果失真 | 已修复并复验（F10 三端一致 live + 25 点） |
 | D-10 | Major | Web | 测试用例 | 把对象属性 `Rainform.impactStats` 当函数调用；provider id 写成 `crawl` 而非 `crawler` | 首轮 web 契约执行 | A09 / F03 误报失败、G10 误报异常 | 已修复并复验（web 69/0/1） |
 | D-11 | Major | 全部 | UI 布局（历史缺陷回归） | CSS `inset` 简写不被旧 WebView 支持，容器宽度塌成 0，整屏黑 | Chrome ≤ 86 打开页面 | 所有端 UI 容器 | 上一轮已修；本轮 A08 + G01–G04 三端回归确认 |

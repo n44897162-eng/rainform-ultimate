@@ -7,12 +7,11 @@
 | --- | --- | --- | --- |
 | Web 包完整且单文件零外部引用 | PASS | Major | 21 True 0 |
 | Android APK v1/v2/v3 签名有效 | PASS | Critical | Verifies \| Verified using v1 scheme (JAR signing): true \| Verified using v2 scheme (APK Signature Scheme v2): true \| Verified using v3 scheme (APK Signature Scheme v3): true |
-| Android APK 启动 Activity 与 SDK 范围 | PASS | Critical | package: name='cn.rainform.ultimate' versionCode='1' versionName='1.0.0' platformBuildVersionName='14' platformBuildVersionCode='34' compileSdkVersion='34' compileSdkVersionCodename='14' |
-| 静默安装副本与交付 Setup.exe 字节一致 | PASS | Critical | sha256=153a649b55f6a30be9467296… |
-| Windows Setup.exe 静默安装成功 | PASS | Critical | dir=F:\Rainform-Ultimate\tests\.win-install-1793901341404  |
-| Windows 安装包含卸载器与 app.asar | PASS | Major | {"hasUninstaller":true,"hasAsar":true} |
-| Windows 安装版启动后 3D 旋转与数据层可用 | PASS | Critical | {"rainform":true,"weather":true,"native":{},"scene":[1787,1002],"legacy":false,"glerr":false} rot={"d":60} |
-| Windows 卸载器可静默卸载 | PASS | Major | dir=F:\Rainform-Ultimate\tests\.win-install-1793901341404 |
-| Windows 便携版可启动且功能可用 | PASS | Critical | {"rainform":true,"weather":true,"native":{},"scene":[1787,1002],"legacy":false,"glerr":false} rot={"d":60} |
+| Android APK 启动 Activity 与 SDK 范围 | FAIL | Critical |  |
+| 静默安装副本与交付 Setup.exe 字节一致 | PASS | Critical | sha256=25aadb9120fd5727c49d909c… |
+| Windows Setup.exe 静默安装成功 | PASS | Critical | dir=F:\下载\项目门户\_ghrepo\tests\.win-install-1794235906501  |
+| Windows 安装包含卸载器与 app.asar | FAIL | Major | {"hasUninstaller":false,"hasAsar":true} |
+| Windows 安装版启动后 3D 旋转与数据层可用 | PASS | Critical | {"rainform":true,"weather":true,"native":{},"scene":[1790,1002],"legacy":false,"glerr":false} rot={"d":60} |
+| Windows 便携版可启动且功能可用 | PASS | Critical | {"rainform":true,"weather":true,"native":{},"scene":[1790,1002],"legacy":false,"glerr":false} rot={"d":60} |
 
-合计：9 通过 / 0 失败。
+合计：6 通过 / 2 失败。

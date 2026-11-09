@@ -56,7 +56,7 @@ node weather/server/server.js --root app/pwa
 
 **发布**：把 `app/pwa/` 整个目录上传到任意静态托管即可。若要实时数据，把 `weather/server` 部署到同源或带 CORS 的 HTTPS 域名（网关已默认返回 `Access-Control-Allow-Origin: *`），再用 `?weather=server&server=https://your-domain&auto=1` 预置。
 
-### 一键公开链接（无 WorkBuddy 域名）
+### 一键公开链接（无自定义域名）
 
 早期版本曾用 Netlify 的匿名部署拿到过公开链接，但匿名站点会被回收。正式做法是：
 静态目录传 Netlify/Vercel/GitHub Pages，网关传任意 Node 主机（或 Serverless），两边都用自己的域名。

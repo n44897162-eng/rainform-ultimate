@@ -5,6 +5,17 @@
 同一份源码产出 **网页端（单文件 / PWA）、Windows PC 端（Electron）、Android 端（原生 WebView）** 三个平台；苹果端按需求未纳入本轮交付。
 
 
+## 下载
+
+预编译产物在 [Releases](https://github.com/n44897162-eng/rainform-ultimate/releases) 页面，源码在仓库内。
+
+| 平台 | 文件 | 说明 |
+| --- | --- | --- |
+| Windows | `Rainform-Ultimate-Setup-1.1.0.exe` | 安装版，可选安装目录，自带卸载器 |
+| Windows | `Rainform-Ultimate-Portable-1.1.0.exe` | 免安装单文件，双击即用 |
+| Android | `Rainform-Ultimate-v1.1.0.apk` | 已签名，可直接安装（最低 Android 6.0 / API 23） |
+| Web | `Rainform-Web-1.1.0.zip` | PWA 站点 + 单文件版 + 本地数据网关，解压即用 |
+
 ## 快速开始
 
 ```bash

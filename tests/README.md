@@ -14,7 +14,7 @@
 | Python 3.13 + Pillow | 系统 Python | PNG 像素统计（画面非空白、旋转前后差异） | 已安装 |
 | 天气网关 | `weather/server/server.js` | REST / 爬取 / SSE / WS 被测端点 | 测试脚本自动拉起（若未监听 8787） |
 
-**宿主环境污染处理**：WorkBuddy 会话导出 `ELECTRON_RUN_AS_NODE=1` 与 `NODE_OPTIONS` shim，会让被启动的 Electron 退化成纯 Node 进程。测试适配器在 `spawn` 时清除这两个变量（见 `tests/harness.js` / `tests/smoke-installers.js`）。用户机器不存在该问题。
+**宿主环境污染处理**：宿主会话导出 `ELECTRON_RUN_AS_NODE=1` 与 `NODE_OPTIONS` shim，会让被启动的 Electron 退化成纯 Node 进程。测试适配器在 `spawn` 时清除这两个变量（见 `tests/harness.js` / `tests/smoke-installers.js`）。用户机器不存在该问题。
 
 ## 2. 执行
 

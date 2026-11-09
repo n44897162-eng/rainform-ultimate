@@ -74,7 +74,7 @@
 
 ### D-08 · Electron devtools 端点连不上（Critical，测试环境）
 
-- **复现条件**：在 WorkBuddy 宿主会话内 `spawn` Electron 应用。
+- **复现条件**：在 CI 宿主会话内 `spawn` Electron 应用。
 - **影响范围**：Windows 端整组契约用例被跳过（`timeout waiting for Electron devtools endpoint`）。
 - **根因**：宿主导出 `ELECTRON_RUN_AS_NODE=1` 与 `NODE_OPTIONS` shim，Electron 以纯 Node 模式启动并报 `bad option: --remote-debugging-port`。**用户机器不存在该变量，安装包本身无问题。**
 - **修复**：`tests/harness.js` 与 `tests/smoke-installers.js` 启动子进程时从 `env` 中删除这两个变量。

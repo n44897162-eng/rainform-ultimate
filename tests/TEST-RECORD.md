@@ -6,18 +6,18 @@
 
 | 项 | 值 |
 | --- | --- |
-| 执行时间 | 2026-11-09T14:30:47.861Z |
+| 执行时间 | 2026-11-09T14:54:27.634Z |
 | 主机 OS | Windows 11 x64 |
 | Node | v22.22.2 |
 | 测试工具 | playwright-core 1.64.1、Node 22 原生 CDP/WebSocket、Android SDK platform-tools (adb)、Python 3 + Pillow（图像判定） |
 | 天气网关 | http://127.0.0.1:8787（离线样本帧 + REST / 爬取 / SSE / WS） |
 | 被测版本 | 1.0.0 |
 
-**web**：`{"driver":"playwright-core 1.64.1","browser":"Google Chrome (headless, SwiftShader WebGL2)","url":"http://127.0.0.1:8787/","standalone":"<repo>\\Rainform-Ultimate-standalone.html"}`
+**web**：`{"driver":"playwright-core 1.64.1","browser":"Google Chrome (headless, SwiftShader WebGL2)","url":"http://127.0.0.1:8787/","standalone":"F:\\下载\\项目门户\\_ghrepo\\Rainform-Ultimate-standalone.html"}`
 
-**win**：`{"driver":"playwright-core connectOverCDP","exe":"<repo>\\app\\desktop\\dist\\win-unpacked\\Rainform Ultimate.exe","port":9332,"url":"file:///<repo>/app/desktop/dist/win-unpacked/resources/app.asar/www/index.html?weather=server&auto=1&server=http%3A%2F%2F127.0.0.1%3A8787","runtime":"Electron 33 / Chromium"}`
+**win**：`{"driver":"playwright-core connectOverCDP","exe":"F:\\下载\\项目门户\\_ghrepo\\app\\desktop\\dist\\win-unpacked\\Rainform Ultimate.exe","port":9332,"url":"file:///F:/%E4%B8%8B%E8%BD%BD/%E9%A1%B9%E7%9B%AE%E9%97%A8%E6%88%B7/_ghrepo/app/desktop/dist/win-unpacked/resources/app.asar/www/index.html?weather=server&auto=1&server=http%3A%2F%2F127.0.0.1%3A8787","runtime":"Electron 33 / Chromium"}`
 
-**android**：`{"driver":"raw CDP over adb forward","apk":"<repo>\\dist\\Rainform-Ultimate-v1.0.0.apk","pid":"2159","emulator":"Android 11 / API 30 / x86_64 / SwiftShader","url":"http://127.0.0.1:37761/index.html"}`
+**android**：`{"driver":"raw CDP over adb forward","apk":"F:\\下载\\项目门户\\_ghrepo\\dist\\Rainform-Ultimate-v1.1.0.apk","pid":"2012","emulator":"Android 11 / API 30 / x86_64 / SwiftShader","url":"http://127.0.0.1:45451/index.html"}`
 
 ## 2. 执行范围
 
@@ -44,10 +44,10 @@
 | A06 3D 画布尺寸有效 | A 启动与渲染 | PASS |  |
 | A07 未进入 WebGL 错误页 | A 启动与渲染 | PASS |  |
 | A08 无横向溢出 | A 启动与渲染 | PASS | 1600 <= 1600 |
-| A09 渲染帧持续推进 | A 启动与渲染 | PASS | {"s1":{"n":21,"min":0.20124425644638913,"max":1.5737107684818696,"sum":14.217253203575028,"tiny":9,"big":3,"crowns":12,"jets":2,"beads":123},"s2":{"n":30,"min":0.1918186314381575,"max":1.5737107684818696,"sum":19.25159744816692,"tiny":15,"big":4,"crowns":15,"jets":3,"beads":158}} |
-| A10 画面非空白 | A 启动与渲染 | PASS | {"var":17.322,"mean":16.21,"size":[1600,1000]} |
+| A09 渲染帧持续推进 | A 启动与渲染 | PASS | {"s1":{"n":24,"min":0.221873921670566,"max":1.5513302573335281,"sum":13.860890917359974,"tiny":13,"big":2,"crowns":11,"jets":2,"beads":102},"s2":{"n":35,"min":0.2126516018104341,"max":1.5513302573335281,"sum":20.035661086991816,"tiny":18,"big":3,"crowns":17,"jets":3,"beads":154}} |
+| A10 画面非空白 | A 启动与渲染 | PASS | {"var":17.303,"mean":16.18,"size":[1600,1000]} |
 | A11 启动期零 JS 异常 | A 启动与渲染 | PASS | [] |
-| A12 渲染循环持续推进（后端无关） | A 启动与渲染 | PASS | {"backend":"gl","from":56,"to":63,"drops":0} |
+| A12 渲染循环持续推进（后端无关） | A 启动与渲染 | PASS | {"backend":"gl","from":57,"to":66,"drops":0} |
 | B01 初始相机角度有效 | B 3D 旋转 | PASS | {"t":0.5235987755982988,"yaw":"30°"} |
 | B02 30°×2 步进合计 60° | B 3D 旋转 | PASS | {"d":60} |
 | B03 反向 -30° 回退正确 | B 3D 旋转 | PASS | {"d":-30} |
@@ -57,7 +57,7 @@
 | B07 键盘 ArrowRight +30° | B 3D 旋转 | PASS | {"d":30} |
 | B08 拖拽轨道相机改变角度 | B 3D 旋转 | PASS | {"d":-36} |
 | B09 视角复位回到默认 30° | B 3D 旋转 | PASS | {"d":30} |
-| B10 旋转后画面确实变化 | B 3D 旋转 | PASS | {"var":17.582,"mean":16.7,"size":[1600,1000],"diff":5.762} |
+| B10 旋转后画面确实变化 | B 3D 旋转 | PASS | {"var":17.626,"mean":16.27,"size":[1600,1000],"diff":5.539} |
 | B11 角度读数与状态同步 | B 3D 旋转 | PASS | {"yaw":"120°","t":120} |
 | B12 自动旋转开关 | B 3D 旋转 | PASS | {"on":true,"off":false} |
 | C01 图表开关 off/on | C 图表与拟合 | PASS | {"a":true,"b":false,"cls":true,"c":true} |
@@ -69,7 +69,7 @@
 | C07 快捷键 S 切换平滑 | C 图表与拟合 | PASS | {"a":true,"b":false} |
 | D01 update() 25 点数据生效 | D 数据与播放 | PASS | {"rain":"4.9"} |
 | D02 非法长度数据被拒绝且不崩溃 | D 数据与播放 | PASS | {"ok":true} |
-| D03 时间轴 setTime 生效 | D 数据与播放 | PASS | {"t":12,"tv":"23:05"} |
+| D03 时间轴 setTime 生效 | D 数据与播放 | PASS | {"t":12,"tv":"23:01"} |
 | D04 播放/暂停切换 | D 数据与播放 | PASS | {"a":true,"b":false,"c":true} |
 | D05 四档画质均可切换 | D 数据与播放 | PASS | [[0,"低"],[1,"中"],[2,"高"],[3,"极致"]] |
 | D06 数据预设切换 | D 数据与播放 | PASS | {"name":"drizzle"} |
@@ -85,7 +85,7 @@
 | E09 背景色板：8 项、白昼反色、初始还原 | E UI 交互 | PASS | {"light":{"n":8,"keys":["origin","ink","navy","green","plum","rust","slate","white"],"cls":true,"filter":"grayscale(1) invert(1)","bg":"#eef2f6"},"back":{"cls":false,"filter":"","cur":"origin"}} |
 | E10 全球强降雨榜单：5 行、点击导入城市 | E UI 交互 | PASS | {"n":5,"name":"奥克兰","city":"奥克兰","sel":true,"hasRefresh":true,"hasMeta":true,"status":"正在导入「奥克兰」的 25 个逐时降雨值…"} |
 | F01 数据源 >= 11 种 | F 实时天气 | PASS |  |
-| F02 REST /api/weather 实时 | F 实时天气 | PASS | {"status":"live","src":"reference gateway · synthetic sample","n":25,"err":null} |
+| F02 REST /api/weather 实时 | F 实时天气 | PASS | {"status":"live","src":"offline-sample","n":25,"err":null} |
 | F03 爬虫 /api/crawl 实时 | F 实时天气 | PASS | {"status":"live","src":"offline-sample","n":25,"err":null} |
 | F04 SSE /api/stream 实时 | F 实时天气 | PASS | {"status":"live","src":"offline-sample","n":25,"err":null} |
 | F05 WebSocket /ws 实时 | F 实时天气 | PASS | {"status":"live","src":"offline-sample","n":25,"err":null} |
@@ -107,7 +107,7 @@
 | G09 断网时仍可回到演示数据 | G 边界场景 | PASS | {"ok":true,"s":"idle","n":25} |
 | G10 全流程零 JS 异常 | G 边界场景 | PASS | [] |
 | H01 PWA manifest 与 Service Worker | H 平台差异 | PASS | {"display":"standalone","icons":4,"sw":true} |
-| H02 单文件 HTML 可直接打开 | H 平台差异 | PASS | bytes=828125 |
+| H02 单文件 HTML 可直接打开 | H 平台差异 | PASS | bytes=828117 |
 | H03 原生 HTTP 桥 | H 平台差异 | SKIP | Web 端使用浏览器 fetch，不适用 |
 
 ### win
@@ -122,10 +122,10 @@
 | A06 3D 画布尺寸有效 | A 启动与渲染 | PASS |  |
 | A07 未进入 WebGL 错误页 | A 启动与渲染 | PASS |  |
 | A08 无横向溢出 | A 启动与渲染 | PASS | 1432 <= 1432 |
-| A09 渲染帧持续推进 | A 启动与渲染 | PASS | {"s1":{"n":82,"min":0.20500372203216194,"max":1.9914478571310104,"sum":57.59717366215339,"tiny":37,"big":19,"crowns":45,"jets":13,"beads":543},"s2":{"n":146,"min":0.2006003085073008,"max":1.9914478571310104,"sum":97.45944286381439,"tiny":74,"big":32,"crowns":72,"jets":24,"beads":902}} |
-| A10 画面非空白 | A 启动与渲染 | PASS | {"var":29.065,"mean":21.41,"size":[1790,1003]} |
+| A09 渲染帧持续推进 | A 启动与渲染 | PASS | {"s1":{"n":101,"min":0.19245099079813766,"max":2.045070958474033,"sum":67.91324628807386,"tiny":55,"big":26,"crowns":46,"jets":19,"beads":641},"s2":{"n":165,"min":0.19245099079813766,"max":2.045070958474033,"sum":111.31988450391641,"tiny":88,"big":44,"crowns":77,"jets":34,"beads":1043}} |
+| A10 画面非空白 | A 启动与渲染 | PASS | {"var":28.304,"mean":21.25,"size":[1790,1003]} |
 | A11 启动期零 JS 异常 | A 启动与渲染 | PASS | [] |
-| A12 渲染循环持续推进（后端无关） | A 启动与渲染 | PASS | {"backend":"gl","from":214,"to":263,"drops":0} |
+| A12 渲染循环持续推进（后端无关） | A 启动与渲染 | PASS | {"backend":"gl","from":216,"to":266,"drops":0} |
 | B01 初始相机角度有效 | B 3D 旋转 | PASS | {"t":0.5235987755982988,"yaw":"30°"} |
 | B02 30°×2 步进合计 60° | B 3D 旋转 | PASS | {"d":60} |
 | B03 反向 -30° 回退正确 | B 3D 旋转 | PASS | {"d":-30} |
@@ -135,7 +135,7 @@
 | B07 键盘 ArrowRight +30° | B 3D 旋转 | PASS | {"d":30} |
 | B08 拖拽轨道相机改变角度 | B 3D 旋转 | PASS | {"d":-36} |
 | B09 视角复位回到默认 30° | B 3D 旋转 | PASS | {"d":30} |
-| B10 旋转后画面确实变化 | B 3D 旋转 | PASS | {"var":28.224,"mean":21.3,"size":[1790,1003],"diff":12.824} |
+| B10 旋转后画面确实变化 | B 3D 旋转 | PASS | {"var":27.316,"mean":21.04,"size":[1790,1003],"diff":12.431} |
 | B11 角度读数与状态同步 | B 3D 旋转 | PASS | {"yaw":"120°","t":120} |
 | B12 自动旋转开关 | B 3D 旋转 | PASS | {"on":true,"off":false} |
 | C01 图表开关 off/on | C 图表与拟合 | PASS | {"a":true,"b":false,"cls":true,"c":true} |
@@ -147,7 +147,7 @@
 | C07 快捷键 S 切换平滑 | C 图表与拟合 | PASS | {"a":true,"b":false} |
 | D01 update() 25 点数据生效 | D 数据与播放 | PASS | {"rain":"0.3"} |
 | D02 非法长度数据被拒绝且不崩溃 | D 数据与播放 | PASS | {"ok":true} |
-| D03 时间轴 setTime 生效 | D 数据与播放 | PASS | {"t":12,"tv":"02:10"} |
+| D03 时间轴 setTime 生效 | D 数据与播放 | PASS | {"t":12,"tv":"02:07"} |
 | D04 播放/暂停切换 | D 数据与播放 | PASS | {"a":true,"b":false,"c":true} |
 | D05 四档画质均可切换 | D 数据与播放 | PASS | [[0,"低"],[1,"中"],[2,"高"],[3,"极致"]] |
 | D06 数据预设切换 | D 数据与播放 | PASS | {"name":"drizzle"} |
@@ -200,8 +200,8 @@
 | A06 3D 画布尺寸有效 | A 启动与渲染 | PASS |  |
 | A07 未进入 WebGL 错误页 | A 启动与渲染 | PASS |  |
 | A08 无横向溢出 | A 启动与渲染 | PASS | 320 <= 320 |
-| A09 渲染帧持续推进 | A 启动与渲染 | PASS | {"s1":{"n":730,"min":0.08,"max":0.9069767441860466,"sum":236.90209302325587,"tiny":458,"big":62,"crowns":62,"jets":4,"beads":417},"s2":{"n":1034,"min":0.08,"max":0.9069767441860466,"sum":338.8139534883724,"tiny":636,"big":87,"crowns":87,"jets":6,"beads":566}} |
-| A10 画面非空白 | A 启动与渲染 | PASS | {"var":24.529,"mean":30.63,"size":[320,616]} |
+| A09 渲染帧持续推进 | A 启动与渲染 | PASS | {"s1":{"n":784,"min":0.08,"max":0.9069767441860466,"sum":242.2700000000001,"tiny":513,"big":66,"crowns":66,"jets":10,"beads":515},"s2":{"n":1082,"min":0.08,"max":0.9069767441860466,"sum":333.87232558139533,"tiny":713,"big":85,"crowns":85,"jets":12,"beads":687}} |
+| A10 画面非空白 | A 启动与渲染 | PASS | {"var":24.531,"mean":30.68,"size":[320,616]} |
 | A11 启动期零 JS 异常 | A 启动与渲染 | PASS | [] |
 | A12 渲染循环持续推进（后端无关） | A 启动与渲染 | PASS | {"backend":"2d","from":95,"to":112,"drops":220} |
 | B01 初始相机角度有效 | B 3D 旋转 | PASS | {"t":0.5235987755982988,"yaw":"30°"} |
@@ -213,7 +213,7 @@
 | B07 键盘 ArrowRight +30° | B 3D 旋转 | PASS | {"d":30} |
 | B08 拖拽轨道相机改变角度 | B 3D 旋转 | PASS | {"d":-36} |
 | B09 视角复位回到默认 30° | B 3D 旋转 | PASS | {"d":30} |
-| B10 旋转后画面确实变化 | B 3D 旋转 | PASS | {"var":24.412,"mean":30.55,"size":[320,616],"diff":1.118} |
+| B10 旋转后画面确实变化 | B 3D 旋转 | PASS | {"var":24.384,"mean":30.53,"size":[320,616],"diff":1.117} |
 | B11 角度读数与状态同步 | B 3D 旋转 | PASS | {"yaw":"120°","t":120} |
 | B12 自动旋转开关 | B 3D 旋转 | PASS | {"on":true,"off":false} |
 | C01 图表开关 off/on | C 图表与拟合 | PASS | {"a":true,"b":false,"cls":true,"c":true} |

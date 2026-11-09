@@ -10,7 +10,7 @@ cd F:/Rainform-Ultimate
 node app/android-native/build-apk.js
 ```
 
-产物：`dist/Rainform-Ultimate-v1.0.0.apk`（已 v1/v2/v3 签名，可直接 `adb install -r` 或传到手机安装）。
+产物：`dist/Rainform-Ultimate-v1.1.0.apk`（已 v1/v2/v3 签名，可直接 `adb install -r` 或传到手机安装）。
 
 依赖（本机已具备）：
 
@@ -62,7 +62,7 @@ MainActivity
 ## 验证
 
 ```bash
-adb install -r dist/Rainform-Ultimate-v1.0.0.apk
+adb install -r dist/Rainform-Ultimate-v1.1.0.apk
 adb shell monkey -p cn.rainform.ultimate -c android.intent.category.LAUNCHER 1
 ```
 

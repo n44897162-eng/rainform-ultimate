@@ -12,7 +12,7 @@
  *
  *   node app/android-native/build-apk.js
  *
- * Output: dist/Rainform-Ultimate-v1.0.0.apk (signed, installable)
+ * Output: dist/Rainform-Ultimate-v1.1.0.apk (signed, installable)
  */
 'use strict';
 
@@ -24,7 +24,7 @@ const ROOT = path.resolve(__dirname, '../..');                 // F:/Rainform-Ul
 const HERE = __dirname;                                       // app/android-native
 const BUILD = path.join(HERE, 'build');
 const DIST = path.join(ROOT, 'dist');
-const APK = path.join(DIST, 'Rainform-Ultimate-v1.0.0.apk');
+const APK = path.join(DIST, 'Rainform-Ultimate-v1.1.0.apk');
 
 const SDK = process.env.ANDROID_HOME || process.env.ANDROID_SDK_ROOT || 'F:/Android/Sdk';
 const BT = path.join(SDK, 'build-tools', '34.0.0');
@@ -138,8 +138,8 @@ run('link', AAPT2, [
   '--manifest', path.join(HERE, 'AndroidManifest.xml'),
   '--min-sdk-version', '23',
   '--target-sdk-version', '34',
-  '--version-code', '1',
-  '--version-name', '1.0.0',
+  '--version-code', '2',
+  '--version-name', '1.1.0',
   '--auto-add-overlay',
   '-A', ASSETS,
   COMPILED

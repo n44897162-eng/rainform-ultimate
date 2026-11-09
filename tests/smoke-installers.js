@@ -15,10 +15,10 @@ const crypto = require('crypto');
 
 const ROOT = L.ROOT;
 const DIST = path.join(ROOT, 'dist');
-const SETUP = path.join(DIST, 'Rainform-Ultimate-Setup-1.0.0.exe');
-const PORTABLE = path.join(DIST, 'Rainform-Ultimate-Portable-1.0.0.exe');
-const WEBZIP = path.join(DIST, 'Rainform-Web-1.0.0.zip');
-const APK = path.join(DIST, 'Rainform-Ultimate-v1.0.0.apk');
+const SETUP = path.join(DIST, 'Rainform-Ultimate-Setup-1.1.0.exe');
+const PORTABLE = path.join(DIST, 'Rainform-Ultimate-Portable-1.1.0.exe');
+const WEBZIP = path.join(DIST, 'Rainform-Web-1.1.0.zip');
+const APK = path.join(DIST, 'Rainform-Ultimate-v1.1.0.apk');
 /* Fresh per-run directories: the uninstaller removes the install tree, so the
  * test never needs a bulk recursive delete (blocked by the host's safe-delete
  * guard once an installed Electron tree has >50 files). */
@@ -135,7 +135,9 @@ async function main() {
       await sleep(500);
     }
     push('Windows Setup.exe 静默安装成功', ready, 'dir=' + INSTALL_DIR + ' ' + install.slice(0, 120), 'Critical');
-    const hasUninstaller = fs.existsSync(path.join(INSTALL_DIR, 'Uninstall.exe'));
+    /* NSIS 的卸载器文件名带产品名，例如 "Uninstall Rainform Ultimate.exe" */
+    const uninstName = (fs.readdirSync(INSTALL_DIR).filter(n => /^Uninstall.*\.exe$/i.test(n)))[0] || '';
+    const hasUninstaller = !!uninstName;
     const hasAsar = fs.existsSync(path.join(INSTALL_DIR, 'resources', 'app.asar'));
     push('Windows 安装包含卸载器与 app.asar', hasUninstaller && hasAsar, JSON.stringify({ hasUninstaller, hasAsar }), 'Major');
     if (ready) {
@@ -147,8 +149,9 @@ async function main() {
       // to a neutral name INSIDE $INSTDIR so NSIS still resolves the same
       // install directory when it removes the tree.
       const neutralUninst = path.join(INSTALL_DIR, 'RfUninst.exe');
-      try { fs.copyFileSync(path.join(INSTALL_DIR, 'Uninstall.exe'), neutralUninst); } catch (e) {}
-      trySh(fs.existsSync(neutralUninst) ? neutralUninst : path.join(INSTALL_DIR, 'Uninstall.exe'), ['/S'], 90000);
+      const srcUninst = path.join(INSTALL_DIR, uninstName);
+      try { fs.copyFileSync(srcUninst, neutralUninst); } catch (e) {}
+      trySh(fs.existsSync(neutralUninst) ? neutralUninst : srcUninst, ['/S'], 90000);
       let gone = false;
       for (let i = 0; i < 30; i++) {
         if (!fs.existsSync(path.join(INSTALL_DIR, 'Rainform Ultimate.exe'))) { gone = true; break; }
