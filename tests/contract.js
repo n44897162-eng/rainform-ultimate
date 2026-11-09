@@ -227,12 +227,12 @@ async function run(a, rec) {
 
   /* ====================================================== E. UI ========= */
   await T('E UI 交互', 'E01 面板收起/展开状态同步', async () => {
-    const r = await J(`(function(){if(!window.Rainform)return 'null';Rainform.setPanels(true);var a={s:Rainform.state.panelsHidden,c:document.getElementById('app').classList.contains('panels-hidden'),f:document.getElementById('fabToggle').getAttribute('aria-pressed')};Rainform.setPanels(false);return JSON.stringify({a:a,b:Rainform.state.panelsHidden})})()`);
-    return { ok: r.a && r.a.s === true && r.a.c === true && r.a.f === 'true' && r.b === false, detail: JSON.stringify(r) };
+    const r = await J(`(function(){if(!window.Rainform)return 'null';Rainform.setPanels(true);var a={s:Rainform.state.panelsHidden,c:document.getElementById('app').classList.contains('panels-hidden'),nofab:!document.getElementById('fabToggle')};Rainform.setPanels(false);return JSON.stringify({a:a,b:Rainform.state.panelsHidden})})()`);
+    return { ok: r.a && r.a.s === true && r.a.c === true && r.a.nofab === true && r.b === false, detail: JSON.stringify(r) };
   }, 'Major');
-  await T('E UI 交互', 'E02 顶部按钮与 FAB 状态一致', async () => {
-    const r = await J(`(function(){document.getElementById('panelToggle').click();var a=document.getElementById('app').classList.contains('panels-hidden');document.getElementById('fabToggle').click();var b=document.getElementById('app').classList.contains('panels-hidden');return JSON.stringify({a:a,b:b})})()`);
-    return { ok: r.a !== r.b, detail: JSON.stringify(r) };
+  await T('E UI 交互', 'E02 顶部按钮切换面板且无重复入口', async () => {
+    const r = await J(`(function(){document.getElementById('panelToggle').click();var a=document.getElementById('app').classList.contains('panels-hidden');var miniShow=document.getElementById('miniShow');var boost=document.querySelector('#miniBar #boostBtn');document.getElementById('panelToggle').click();return JSON.stringify({a:a,b:document.getElementById('app').classList.contains('panels-hidden'),miniShow:!!miniShow,boostInBar:!!boost})})()`);
+    return { ok: r.a === true && r.b === false && r.miniShow === false && r.boostInBar === true, detail: JSON.stringify(r) };
   }, 'Major');
   await T('E UI 交互', 'E03 中英双语切换', async () => {
     const r = await J(`(function(){if(!window.Rainform)return 'null';var a=Rainform.state.lang;document.getElementById('langBtn').click();var b=Rainform.state.lang,btn=document.getElementById('langBtn').textContent;document.getElementById('langBtn').click();return JSON.stringify({a:a,b:b,btn:btn})})()`);
@@ -254,6 +254,53 @@ async function run(a, rec) {
     const r = await J(`(function(){var e=document.getElementById('soundToggle');if(!e)return JSON.stringify({skip:true});e.click();return JSON.stringify({cls:e.className})})()`);
     return { ok: !!r, detail: JSON.stringify(r) };
   }, 'Minor');
+  await T('E UI 交互', 'E08 强化显示：默认开、上限随峰值、可持久化', async () => {
+    const r = await J(`(function(){if(!window.Rainform)return 'null';
+      var b=document.getElementById('boostBtn');
+      var before={on:Rainform.boost,max:Rainform.axisMax,cls:b.classList.contains('active'),pressed:b.getAttribute('aria-pressed'),ls:localStorage.getItem('rainform.boost')};
+      Rainform.update(Array.from({length:25},function(){return 3.2}));
+      var peak={max:Rainform.axisMax};
+      b.click();
+      var off={on:Rainform.boost,max:Rainform.axisMax,cls:b.classList.contains('active'),ls:localStorage.getItem('rainform.boost')};
+      b.click();
+      var on2={on:Rainform.boost,max:Rainform.axisMax};
+      return JSON.stringify({before:before,peak:peak,off:off,on2:on2})})()`);
+    const ok = r && r.before.on === true && r.before.cls === true && r.before.pressed === 'true' &&
+      Math.abs(r.peak.max - 3.6) < 0.15 &&
+      r.off.on === false && r.off.max === 20 && r.off.cls === false && r.off.ls === '0' &&
+      r.on2.on === true && Math.abs(r.on2.max - 3.6) < 0.15;
+    return { ok, detail: JSON.stringify(r).slice(0, 320) };
+  }, 'Major');
+  await T('E UI 交互', 'E09 背景色板：8 项、白昼反色、初始还原', async () => {
+    const r = await J(`(function(){if(!window.Rainform)return 'null';
+      var sw=document.querySelectorAll('#bgGrid .bg-swatch');
+      var keys=Array.prototype.map.call(sw,function(n){return n.dataset.key});
+      var app=document.getElementById('app'),cv=document.getElementById('scene');
+      Rainform.setBackdrop('white');
+      var light={n:sw.length,keys:keys,cls:app.classList.contains('bg-light'),filter:cv.style.filter,
+                 bg:getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()};
+      Rainform.setBackdrop('origin');
+      var back={cls:app.classList.contains('bg-light'),filter:cv.style.filter,cur:Rainform.backdrop};
+      return JSON.stringify({light:light,back:back})})()`);
+    const ok = r && r.light.n === 8 && r.light.keys[0] === 'origin' && r.light.keys[7] === 'white' &&
+      r.light.cls === true && /invert\(1\)/.test(r.light.filter) &&
+      r.back.cls === false && r.back.filter === '' && r.back.cur === 'origin';
+    return { ok, detail: JSON.stringify(r).slice(0, 320) };
+  }, 'Major');
+  await T('E UI 交互', 'E10 全球强降雨榜单：5 行、点击导入城市', async () => {
+    const r = await J(`(function(){var box=document.getElementById('trBox');
+      if(!box)return JSON.stringify({err:'no trBox'});
+      var rows=box.querySelectorAll('.tr-item');
+      if(!rows.length)return JSON.stringify({empty:true,n:0});
+      var first=rows[0], name=first.querySelector('.tr-name').textContent;
+      first.click();
+      return JSON.stringify({n:rows.length,name:name,city:document.getElementById('weatherCity').value,
+        sel:first.classList.contains('sel'),hasRefresh:!!document.getElementById('trRefresh'),
+        hasMeta:!!document.getElementById('trMeta'),status:document.getElementById('trStatus').textContent})})()`);
+    /* 离线/无后端时榜单为空是允许的，但结构与交互必须存在 */
+    const ok = r && (r.err === undefined) && (r.n === 5 ? (r.city === r.name && r.sel === true) : r.empty === true);
+    return { ok, detail: JSON.stringify(r).slice(0, 320) };
+  }, 'Major');
 
   /* ================================================ F. live weather ==== */
   const prov = await J(`window.RainWeather?JSON.stringify({n:RainWeather.providers.length,v:RainWeather.version}):'null'`);

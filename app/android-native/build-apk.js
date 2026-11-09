@@ -110,7 +110,11 @@ cp(path.join(ICON_DIR, 'icon-192.png'), path.join(ASSETS, 'icon.png'));
 let html = fs.readFileSync(STANDALONE, 'utf8');
 const bridge = fs.readFileSync(path.join(HERE, 'bridge.js'), 'utf8');
 const legacy = fs.readFileSync(path.join(HERE, 'legacy2d.js'), 'utf8');
-const script = '<script>\n' + bridge + '\n</script>\n<script>\n' + legacy + '\n</script>\n';
+const API_BASE = (process.env.RAINFORM_API_BASE || '').replace(/['"\\\r\n]/g, '').trim();
+const pre = API_BASE
+  ? '<script>window.__RAINFORM_API_BASE__=' + JSON.stringify(API_BASE) + ';</script>\n'
+  : '';
+const script = pre + '<script>\n' + bridge + '\n</script>\n<script>\n' + legacy + '\n</script>\n';
 const head = html.search(/<head[^>]*>/i);
 if (head >= 0) {
   const close = html.indexOf('>', head) + 1;

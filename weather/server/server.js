@@ -366,6 +366,35 @@ function serveStatic(req, res, pathname) {
   });
 }
 
+/* --------------------------------------------- Rainform server edition API
+ * deploy/ 下的线上版由 Nginx 反代到 Python 后端，暴露 /api/rainfall 与
+ * /api/top-rain。参考网关在这里提供同形状的合成数据，让三端应用与 deploy/
+ * 页面都能在本地把整条链路跑通 —— 数值是示例，不是真实预报。
+ */
+const TOP_RAIN = [
+  { city: '奥克兰', region: '新西兰', lat: -36.8485, lon: 174.7633, current_mmh: 1.2, day_avg: 1.75, day_sum: 41.9, day_peak: 3.8 },
+  { city: '里斯本', region: '葡萄牙', lat: 38.7223, lon: -9.1393, current_mmh: 0.4, day_avg: 1.62, day_sum: 38.8, day_peak: 5.3 },
+  { city: '上海', region: '中国', lat: 31.2304, lon: 121.4737, current_mmh: 2.1, day_avg: 1.44, day_sum: 34.6, day_peak: 6.2 },
+  { city: '圣保罗', region: '巴西', lat: -23.5505, lon: -46.6333, current_mmh: 0.8, day_avg: 1.31, day_sum: 31.4, day_peak: 4.9 },
+  { city: '东京', region: '日本', lat: 35.6762, lon: 139.6503, current_mmh: 0.6, day_avg: 1.08, day_sum: 25.9, day_peak: 3.1 }
+];
+/* 由城市名派生一条稳定的 25 点曲线，保证同一城市每次返回一致 */
+function sampleSeries(city) {
+  let h = 2166136261;
+  const s = String(city || '');
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+  const out = [];
+  for (let i = 0; i < 25; i++) {
+    h ^= h << 13; h >>>= 0; h ^= h >> 17; h ^= h << 5; h >>>= 0;
+    const wave = 1.6 + 2.4 * Math.sin((i / 24) * Math.PI * 2 + (h % 100) / 40);
+    out.push(Math.round(Math.max(0, wave + (h % 1000) / 900) * 10) / 10);
+  }
+  return out;
+}
+function stamp() {
+  return new Date().toISOString().slice(0, 16).replace('T', ' ');
+}
+
 /* ------------------------------------------------------------- API router */
 async function api(req, res, u) {
   const q = Object.fromEntries(u.searchParams.entries());
@@ -379,6 +408,7 @@ async function api(req, res, u) {
         uptimeSec: Math.round((Date.now() - state.startedAt) / 1000),
         seq: state.seq, requests: state.requests, pushes: state.pushes,
         transports: ['rest', 'crawler', 'sse', 'long-poll', 'websocket', 'push'],
+        edition: 'rainform-server-compatible', endpoints: ['/api/rainfall', '/api/top-rain'],
         providers: [...providers.keys()],
         defaultProvider: config.provider,
         sseClients: state.sseClients.size, wsClients: state.wsClients.size,
@@ -399,6 +429,34 @@ async function api(req, res, u) {
       if (!state.lastFrame) { send(res, 404, { error: 'No frame yet' }); return; }
       send(res, 200, Object.assign({}, state.lastFrame, { seq: state.seq }));
       return;
+
+    /* ---- 线上版（deploy/）同形状接口：本地联调与三端回归用 ------------- */
+    case '/api/rainfall': {
+      const city = (q.city || '').trim() || '上海';
+      send(res, 200, {
+        city,
+        lat: +(q.lat || 31.2304), lon: +(q.lon || 121.4737),
+        values: sampleSeries(city),
+        updated_at: stamp(),
+        source: 'reference gateway · synthetic sample',
+        cached: false, endpoint: '/api/rainfall',
+        mode: q.city ? 'manual' : 'auto', located: !q.city
+      });
+      return;
+    }
+    case '/api/top-rain': {
+      const cities = TOP_RAIN.map((c, i) => Object.assign({}, c, {
+        now: c.current_mmh, rank: i + 1,
+        level: c.day_avg >= 8 ? '大雨' : (c.day_avg >= 2.5 ? '中雨' : '小雨')
+      }));
+      send(res, 200, {
+        cities, rank_by: '当日平均降雨',
+        note: '参考网关合成样本，仅用于本地联调', sample_size: cities.length,
+        updated_at: stamp(), source: 'reference gateway · synthetic sample',
+        cached: false, ts: Date.now()
+      });
+      return;
+    }
 
     case '/api/weather':
     case '/api/crawl': {
@@ -474,6 +532,7 @@ async function api(req, res, u) {
     default:
       send(res, 404, { error: 'Unknown endpoint', endpoints: [
         '/api/health', '/api/providers', '/api/weather', '/api/crawl', '/api/latest',
+        '/api/rainfall', '/api/top-rain',
         '/api/stream', '/api/poll', '/api/push', '/api/config'
       ] });
   }

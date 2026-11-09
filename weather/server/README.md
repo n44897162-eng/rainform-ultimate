@@ -40,9 +40,13 @@ node weather/server/server.js --token my-secret
 | POST | `/api/push` | 外部系统主动推入数据帧 | 任意 |
 | GET | `/api/latest` | 最近一帧缓存 | — |
 | GET / POST | `/api/config` | 运行时改间隔 / 上游插件 | — |
+| GET | `/api/rainfall?city=` | 25 个逐时值（合成样本），`liverain` 数据源使用 | `liverain` |
+| GET | `/api/top-rain` | 全球强降雨 TOP5（合成样本），页面雨榜使用 | — |
 
 ```bash
 curl "http://127.0.0.1:8787/api/health"
+curl "http://127.0.0.1:8787/api/rainfall?city=Shanghai"
+curl "http://127.0.0.1:8787/api/top-rain"
 curl "http://127.0.0.1:8787/api/weather?lat=31.23&lon=121.47&city=Shanghai"
 curl "http://127.0.0.1:8787/api/crawl?city=Shanghai&lat=31.23&lon=121.47"
 curl -N "http://127.0.0.1:8787/api/stream"
@@ -65,6 +69,27 @@ node weather/server/push-example.js
   "values": [0.1, 0, "... 共 25 个逐时值 00:00–24:00 ..."],
   "meta": {"gateway":"rainform-weather-gateway/1.0"}
 }
+```
+
+## 应用内置接口 `/api/rainfall`、`/api/top-rain`
+
+三端应用里的 `liverain` 数据源请求 `/api/rainfall`：不传 `city` 时由接口按访客
+IP 定位，传了就走指定城市；页面雨榜请求 `/api/top-rain`。参考网关提供**同形状的
+合成样本**，数值是示例、不是真实预报，用于本地联调与三端回归跑通完整链路。
+
+返回结构：
+
+```json
+// GET /api/rainfall?city=Shanghai
+{ "city": "Shanghai", "lat": 31.23, "lon": 121.47,
+  "values": [25 个逐时值], "updated_at": "2026-11-09 21:30",
+  "source": "…", "cached": false, "mode": "manual", "located": false }
+
+// GET /api/top-rain
+{ "cities": [{ "city": "奥克兰", "region": "新西兰", "day_avg": 1.75,
+               "day_sum": 41.9, "day_peak": 3.8, "level": "大雨", "rank": 1 }],
+  "rank_by": "当日平均降雨", "sample_size": 5,
+  "updated_at": "…", "cached": false }
 ```
 
 ## 地区天气爬取接口 `/api/crawl`

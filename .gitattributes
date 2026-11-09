@@ -1,0 +1,2 @@
+# 脚本类文件按 LF 落盘：Windows 上 clone 也不会把 shebang 改成 CRLF
+*.sh          text eol=lf

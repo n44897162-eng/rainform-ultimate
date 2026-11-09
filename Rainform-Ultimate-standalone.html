@@ -249,7 +249,11 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
   border:1px solid transparent;display:flex;align-items:center;gap:6px;transition:.2s;white-space:nowrap}
 #miniBar button:hover{background:rgba(120,190,255,.16);border-color:rgba(160,215,255,.36)}
 #miniBar button:active{transform:scale(.95)}
-#miniBar #miniShow{border-color:rgba(143,211,255,.42);background:rgba(78,168,255,.14)}
+#miniBar #boostBtn{height:34px;padding:0 13px;border-radius:20px;font-size:11px;color:var(--text);
+  border:1px solid transparent;background:none;display:flex;align-items:center;gap:6px;
+  white-space:nowrap;letter-spacing:0}
+#miniBar #boostBtn.active{border-color:rgba(143,214,255,.55);background:rgba(78,168,255,.18);
+  color:var(--cyan)}
 .m-ico{font-size:15px;line-height:1;color:var(--cyan)}
 .m-ico.up{font-size:13px;margin-left:2px}
 .mini-sep{width:1px;height:18px;background:var(--line)}
@@ -533,6 +537,127 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
   .w-log{max-height:66px}
 }
 
+/* ============================================================================
+   雨幕背景色板（与服务器版一致：8 个选项，含「初始」还原与「白昼」亮色）
+   ========================================================================== */
+.bg-btn{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;
+  flex:0 0 auto;border:1px solid var(--line);color:var(--cyan);font-size:13px;
+  cursor:pointer;transition:border-color .2s}
+.bg-btn:hover,.bg-btn:focus-visible{border-color:rgba(143,214,255,.7)}
+.bg-palette{position:fixed;z-index:80;width:min(292px,calc(100vw - 28px));
+  padding:12px;border-radius:12px;border:1px solid var(--line);
+  background:rgba(9,20,34,.95);backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);box-shadow:0 16px 48px rgba(0,0,0,.55);display:none}
+.bg-palette.on{display:block}
+.bg-palette h4{margin:0 0 9px;font:500 9px var(--mono);letter-spacing:.16em;color:var(--muted)}
+.bg-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.bg-swatch{display:flex;flex-direction:column;align-items:center;gap:5px;padding:7px 3px;
+  border-radius:8px;border:1px solid var(--line-2);background:rgba(255,255,255,.02);cursor:pointer}
+.bg-swatch:hover{border-color:rgba(143,214,255,.45)}
+.bg-swatch.on{border-color:var(--cyan);background:rgba(78,168,255,.14)}
+.bg-dot{width:24px;height:24px;border-radius:50%;border:1px solid rgba(255,255,255,.22);
+  box-shadow:inset 0 0 9px rgba(0,0,0,.55)}
+.bg-name{font-size:9px;color:var(--muted);white-space:nowrap}
+.bg-tip{margin-top:9px;font-size:9px;line-height:1.5;color:var(--faint)}
+.wallpaper .bg-btn,.wallpaper .bg-palette{opacity:0;pointer-events:none}
+@media (max-width:700px){.bg-btn{width:28px;height:28px}.bg-grid{grid-template-columns:repeat(4,1fr)}}
+
+/* ---- 白昼（亮色）模式：深色文字 + 浅色面板，保证白底上仍可读 ---- */
+#app.bg-light{
+  --text:#16283a; --muted:#4b647a; --faint:#72889c;
+  --cyan:#1668a8; --cyan-dim:#3f7ba5;
+  --line:rgba(20,60,100,.18); --line-2:rgba(20,60,100,.10);
+  --panel:rgba(255,255,255,.80); --panel-2:rgba(255,255,255,.90);
+}
+#app.bg-light .glass{
+  background:rgba(255,255,255,.82);border-color:rgba(20,60,100,.16);
+  box-shadow:0 18px 60px rgba(20,50,80,.16),inset 0 1px 0 rgba(255,255,255,.9);
+}
+#app.bg-light .w-btn,#app.bg-light .panel-toggle,#app.bg-light .t-btn,
+#app.bg-light .seg-btns button,#app.bg-light .preset-btns button,
+#app.bg-light .curve-btns button,#app.bg-light #miniBar button{
+  background:rgba(232,241,250,.92);border-color:rgba(20,60,100,.16);color:var(--text);
+}
+#app.bg-light #miniBar{background:rgba(255,255,255,.88);border-color:rgba(20,60,100,.18)}
+#app.bg-light .tr-box{background:rgba(255,255,255,.88)}
+#app.bg-light .tr-item{background:rgba(226,238,249,.90);border-color:rgba(20,60,100,.12)}
+#app.bg-light .tr-item.sel{background:rgba(190,222,250,.95)}
+#app.bg-light .tr-name{color:var(--text)}
+#app.bg-light .tr-mm{color:var(--cyan)}
+#app.bg-light .bg-btn{color:var(--text)}
+/* 标题用了渐变镂空字、读数大字写死浅色，白底上会消失，需单独覆盖 */
+#app.bg-light .brand h1{
+  background:none;-webkit-background-clip:border-box;background-clip:border-box;
+  -webkit-text-fill-color:#16283a;color:#16283a;text-shadow:none;
+}
+#app.bg-light .readout .big{color:#16283a;text-shadow:none}
+#app.bg-light .eyebrow .tag{border-color:rgba(20,60,100,.25)}
+/* 这些按钮在源码里写死了深底/浅字，统一压成深字浅底 */
+#app.bg-light .panel-toggle,#app.bg-light .weather-open{
+  background:#e8f1fa !important;color:#16283a !important;
+  border-color:rgba(20,60,100,.22) !important;
+}
+#app.bg-light .pt-ico,#app.bg-light .pt-hide,#app.bg-light .pt-show,
+#app.bg-light .w-live-ico{color:#16283a !important}
+#app.bg-light .w-badge{
+  background:#e3eef8 !important;color:#16283a !important;
+  border-color:rgba(20,60,100,.2) !important;
+}
+#app.bg-light #miniBar button{color:#16283a !important}
+#app.bg-light #miniBar button.active,
+#app.bg-light #miniBar #boostBtn.active{color:#0f5f9e !important}
+#app.bg-light .m-ico{color:#1668a8 !important}
+/* 页脚署名原为深色半透明，白底上几乎看不见，单独压深 */
+#app.bg-light .footer{color:rgba(38,68,96,.72)}
+.bg-palette.light{background:rgba(255,255,255,.97);border-color:rgba(20,60,100,.2);
+  box-shadow:0 16px 48px rgba(20,50,80,.22)}
+.bg-palette.light h4,.bg-palette.light .bg-name,.bg-palette.light .bg-tip{color:#4b647a}
+.bg-palette.light .bg-swatch{background:rgba(20,60,100,.04);border-color:rgba(20,60,100,.12)}
+.bg-palette.light .bg-swatch.on{background:rgba(30,110,180,.16);border-color:#1668a8}
+
+/* ============================================================================
+   全球强降雨城市 TOP5（天气面板内）
+   ========================================================================== */
+.tr-box{margin:9px 0 4px;padding:10px 10px 8px;border-radius:10px;
+  border:1px solid var(--line);background:rgba(9,22,38,.62)}
+.tr-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.tr-title{font-size:10px;letter-spacing:.12em;color:var(--cyan);font-weight:600}
+.tr-count{font:9px var(--mono);color:var(--faint);flex:1}
+.tr-btn{flex:0 0 auto;height:24px;padding:0 9px;border-radius:6px;cursor:pointer;
+  border:1px solid var(--line);background:rgba(14,32,54,.85);
+  color:var(--muted);font-size:10px;font-family:var(--sans)}
+.tr-btn:active{transform:scale(.95)}
+.tr-btn[disabled]{opacity:.5;cursor:default}
+.tr-list{display:flex;flex-direction:column;gap:5px}
+.tr-item{display:flex;align-items:center;gap:9px;min-height:42px;padding:6px 9px;
+  border-radius:8px;border:1px solid var(--line-2);
+  background:rgba(14,30,50,.55);cursor:pointer;transition:background .16s,border-color .16s}
+.tr-item:hover{border-color:rgba(143,214,255,.4)}
+.tr-item:active{transform:scale(.99)}
+.tr-item.sel{border-color:rgba(143,214,255,.7);background:rgba(30,78,118,.55)}
+.tr-rank{flex:0 0 20px;text-align:center;font:11px var(--mono);color:var(--cyan-dim)}
+.tr-main{flex:1;min-width:0}
+.tr-name{font-size:12px;line-height:1.35;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tr-sub{font-size:9px;line-height:1.4;color:var(--faint);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tr-val{flex:0 0 auto;text-align:right;font-family:var(--mono)}
+.tr-mm{font-size:13px;color:var(--cyan);line-height:1.25}
+.tr-unit{font-size:8px;color:var(--faint)}
+.tr-arrow{flex:0 0 auto;font-size:11px;color:var(--faint)}
+.tr-meta{margin-top:8px;font:9px var(--mono);color:var(--faint);line-height:1.5}
+.tr-note{margin-top:3px;font-size:9px;line-height:1.5;color:var(--cyan-dim)}
+.tr-status{margin-top:5px;font-size:9.5px;line-height:1.5;color:var(--green);min-height:13px}
+.tr-status.warn{color:#ffcf8f}
+.tr-loading{padding:12px 4px;font-size:10px;color:var(--faint);text-align:center}
+@media (max-width:820px){
+  .tr-item{min-height:46px;padding:8px 10px}
+  .tr-name{font-size:13px}.tr-mm{font-size:14px}
+}
+/* 平台弱化：低画质（老 WebView / 弱 GPU）下不做毛玻璃，减少合成开销 */
+body.low-end .glass,body.low-end .bg-palette,body.low-end #miniBar{
+  backdrop-filter:none !important;-webkit-backdrop-filter:none !important}
+
 </style>
 </head>
 <body>
@@ -576,6 +701,8 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
           <span data-zh="实时天气" data-en="Live weather">实时天气</span>
           <span id="weatherBadge" class="w-badge">DEMO</span>
         </button>
+        <button id="bgBtn" class="bg-btn" type="button"
+                title="切换雨幕背景色 / Backdrop colour" aria-label="切换背景色">◐</button>
       </div>
     </div>
 
@@ -682,14 +809,6 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
     </div>
   </section>
 
-  <button id="fabToggle" aria-pressed="false" title="显示 / 隐藏面板">
-    <span class="fab-disc">
-      <svg class="fab-hide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 15h18M9 15v6"/></svg>
-      <svg class="fab-show" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 9v-6"/></svg>
-    </span>
-    <span class="fab-label"><span class="fab-hide" data-zh="隐藏面板" data-en="Hide">隐藏面板</span><span class="fab-show" data-zh="显示面板" data-en="Show">显示面板</span></span>
-  </button>
-
   <div id="miniBar">
     <button id="miniRotate"><span class="m-ico">⟳</span> 30°</button>
     <span class="mini-sep"></span>
@@ -699,7 +818,8 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
     <span class="mini-sep"></span>
     <button id="miniWeather" class="w-mini-only" title="实时天气 / Live weather"><span class="m-ico">◈</span></button>
     <span class="mini-sep"></span>
-    <button id="miniShow"><span data-zh="显示面板" data-en="Panels">显示面板</span><span class="m-ico up">⌃</span></button>
+    <button id="boostBtn" aria-pressed="false" data-zh="强化显示" data-en="Boost"
+            title="强化显示：把当天最大雨量设为 Y 轴上限，让小雨的起伏更清楚">强化显示</button>
   </div>
 
   <div class="footer">
@@ -708,6 +828,13 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
   </div>
 
   <div id="toast"></div>
+
+  <!-- ============================ Backdrop palette ============================ -->
+  <div id="bgPalette" class="bg-palette" role="dialog" aria-label="雨幕背景 / Backdrop">
+    <h4 data-zh="雨幕背景 / BACKDROP" data-en="BACKDROP">雨幕背景 / BACKDROP</h4>
+    <div id="bgGrid" class="bg-grid"></div>
+    <div id="bgTip" class="bg-tip"></div>
+  </div>
 
   <!-- ============================ Live weather drawer ============================ -->
   <div id="weatherMask"></div>
@@ -740,6 +867,18 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
         <select id="weatherProvider"></select>
       </label>
       <div id="weatherHint" class="w-hint"></div>
+
+      <div id="trBox" class="tr-box">
+        <div class="tr-head">
+          <span class="tr-title" data-zh="全球强降雨 · TOP 5" data-en="GLOBAL TOP RAIN · TOP 5">全球强降雨 · TOP 5</span>
+          <span class="tr-count">WORLD RAIN</span>
+          <button id="trRefresh" class="tr-btn" type="button" data-zh="↻ 刷新" data-en="↻ Refresh">↻ 刷新</button>
+        </div>
+        <div id="trList" class="tr-list"></div>
+        <div id="trMeta" class="tr-meta"></div>
+        <div id="trNote" class="tr-note"></div>
+        <div id="trStatus" class="tr-status"></div>
+      </div>
 
       <div class="w-sub" data-when="always"><span data-zh="地区" data-en="LOCATION">地区</span><i></i></div>
       <div class="w-grid" data-when="always">
@@ -1553,6 +1692,159 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 
 </script>
 <script>
+/* Rainform 雨幕背景色板 —— 共享模块
+ *
+ * WebGL（src/app.js）与老 Android WebView 的 Canvas 2D 兜底（legacy2d.js）
+ * 共用同一套选项与交互，差异只有「能不能改 3D 场景底色」：
+ *   · 传入 scene / renderer 时，同时改场景背景、雾色与清屏色；
+ *   · 不传时只改 CSS 变量、大气叠层与 canvas 滤镜，2D 渲染器照样可用。
+ *
+ * 白昼模式：shader 里的雨丝写死为浅青→白，白底上直接看不见，所以保持深色
+ * 场景再对 canvas 整体反色 —— 黑底变白底、浅雨丝变深灰，同时 UI 转亮色。
+ */
+(function () {
+  'use strict';
+
+  var BACKDROPS = [
+    { key: 'origin', name: '初始', en: 'Original', hex: '#02060c', origin: true,
+      why: '项目原始背景（含原生大气叠层），点它即可还原' },
+    { key: 'ink',   name: '曜黑', en: 'Ink',   hex: '#02060c', why: '纯场景底色，亮度对比最高，雨丝最锐利' },
+    { key: 'navy',  name: '深靛', en: 'Navy',  hex: '#071a33', why: '冷蓝纵深，雨幕层次更明显' },
+    { key: 'green', name: '墨绿', en: 'Moss',  hex: '#061c18', why: '暗绿衬青，久看更柔和' },
+    { key: 'plum',  name: '暗紫', en: 'Plum',  hex: '#170e2b', why: '冷紫分离色相，雨丝更立体' },
+    { key: 'rust',  name: '赤褐', en: 'Rust',  hex: '#241009', why: '暖色背景与青蓝雨丝色相对比最强' },
+    { key: 'slate', name: '石墨', en: 'Slate', hex: '#11161d', why: '中性灰黑，最不偏色' },
+    { key: 'white', name: '白昼', en: 'Daylight', hex: '#eef2f6', light: true,
+      why: '反色亮色模式：白底 + 深灰雨丝，界面同步转深色文字' }
+  ];
+  var KEY = 'rainform.bg.v1';
+  var DEEP_ATMO =
+    'radial-gradient(ellipse 70% 55% at 50% 34%, rgba(143,214,255,.10), transparent 72%),' +
+    'radial-gradient(ellipse 90% 70% at 50% 100%, rgba(0,0,0,.34), transparent 70%)';
+  var LIGHT_VARS = {
+    '--text': '#16283a', '--muted': '#4b647a', '--faint': '#72889c',
+    '--cyan': '#1668a8', '--cyan-dim': '#3f7ba5',
+    '--line': 'rgba(20,60,100,.18)', '--line-2': 'rgba(20,60,100,.10)',
+    '--panel': 'rgba(255,255,255,.80)', '--panel-2': 'rgba(255,255,255,.90)'
+  };
+
+  var opts = {};
+  var current = BACKDROPS[0];
+  var built = false;
+
+  function $(id) { return document.getElementById(id); }
+  function zh() { return opts.lang ? opts.lang() !== 'en' : document.documentElement.lang !== 'en'; }
+
+  function setColor(c, hex) {
+    if (!c) return;
+    if (typeof c.setStyle === 'function') c.setStyle(hex);
+    else if (typeof c.set === 'function') c.set(hex);
+  }
+  function applyVars(light) {
+    var root = document.documentElement.style;
+    Object.keys(LIGHT_VARS).forEach(function (k) {
+      if (light) root.setProperty(k, LIGHT_VARS[k]);
+      else root.removeProperty(k);
+    });
+  }
+
+  function apply(p, save) {
+    if (typeof p === 'string') p = BACKDROPS.filter(function (x) { return x.key === p; })[0];
+    if (!p) p = BACKDROPS[0];
+    current = p;
+    var light = !!p.light, origin = !!p.origin;
+    var app = $('app'), canvas = $('scene');
+
+    if (app) app.classList.toggle('bg-light', light);
+    applyVars(light);
+    if (canvas) canvas.style.filter = light ? 'grayscale(1) invert(1)' : '';
+
+    var sceneHex = light ? '#02060c' : p.hex;
+    document.documentElement.style.setProperty(
+      '--bg', origin ? '#03070d' : (light ? '#eef2f6' : p.hex));
+
+    var sc = opts.scene;
+    if (sc) {
+      setColor(sc.background, sceneHex);
+      if (sc.fog) setColor(sc.fog.color, sceneHex);
+    }
+    var rd = opts.renderer;
+    if (rd && typeof rd.setClearColor === 'function') rd.setClearColor(sceneHex, 1);
+
+    var atm = document.querySelector('.atmosphere');
+    if (atm) atm.style.background = origin ? '' : (light ? 'none' : DEEP_ATMO);
+
+    var btn = $('bgBtn');
+    if (btn) btn.style.background = light ? '#eef2f6' : (origin ? '#1b2b3a' : p.hex);
+
+    var pal = $('bgPalette');
+    if (pal) {
+      pal.classList.toggle('light', light);
+      Array.prototype.forEach.call(pal.querySelectorAll('.bg-swatch'), function (n) {
+        n.classList.toggle('on', n.dataset.key === p.key);
+      });
+    }
+    var tip = $('bgTip');
+    if (tip) tip.textContent = (zh() ? p.name : p.en) + ' · ' + (zh() ? p.why : p.en);
+
+    if (save !== false) { try { localStorage.setItem(KEY, p.key); } catch (e) {} }
+    if (typeof opts.onChange === 'function') opts.onChange(p);
+    return p.key;
+  }
+
+  function build() {
+    if (built) return;
+    var grid = $('bgGrid'), btn = $('bgBtn'), pal = $('bgPalette');
+    if (!grid || !btn || !pal) return;
+    built = true;
+    grid.textContent = '';
+    BACKDROPS.forEach(function (p) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'bg-swatch'; b.dataset.key = p.key;
+      b.title = p.name + ' · ' + p.why;
+      var dot = document.createElement('span');
+      dot.className = 'bg-dot'; dot.style.background = p.hex;
+      var nm = document.createElement('span');
+      nm.className = 'bg-name'; nm.textContent = p.name;
+      b.appendChild(dot); b.appendChild(nm);
+      b.addEventListener('click', function () { apply(p); pal.classList.remove('on'); });
+      grid.appendChild(b);
+    });
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var on = pal.classList.toggle('on');
+      if (on) {
+        var r = btn.getBoundingClientRect();
+        pal.style.top = Math.max(10, Math.min(r.bottom + 8, window.innerHeight - 250)) + 'px';
+        pal.style.left = Math.max(10, Math.min(r.left, window.innerWidth - 302)) + 'px';
+      }
+    });
+    document.addEventListener('click', function (e) {
+      if (e.target !== btn && !pal.contains(e.target)) pal.classList.remove('on');
+    });
+  }
+
+  var API = {
+    list: BACKDROPS,
+    init: function (o) {
+      opts = o || {};
+      build();
+      var saved = null;
+      try { saved = localStorage.getItem(KEY); } catch (e) {}
+      var hit = BACKDROPS.filter(function (x) { return x.key === saved; })[0] || BACKDROPS[0];
+      return apply(hit, false);
+    },
+    apply: function (key) { return apply(key); },
+    /* 语言切换后重刷提示文案，不覆盖已保存的选择 */
+    refreshLang: function () { return apply(current, false); },
+    get current() { return current; }
+  };
+
+  window.RainBackdrop = API;
+})();
+
+</script>
+<script>
 /* =============================================================================
  * Rainform Weather Bridge  v1.0
  * -----------------------------------------------------------------------------
@@ -1654,6 +1946,36 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
   let cfg = Object.assign({}, DEFAULTS, storeGet(CFG_KEY, {}));
   cfg.mapping = Object.assign({}, DEFAULTS.mapping, cfg.mapping || {});
 
+  /* ------------------------------------------------------------ api base
+     三端取后端地址的顺序（前者优先）：
+       1. 打包时注入的 window.__RAINFORM_API_BASE__（Electron / 安卓壳可预置）
+       2. 页面 URL 上的 ?api=https://your-host（分享链接临时切后端）
+       3. 同源 —— 网页 / PWA 直接请求同源的 /api/
+       4. file:// 下退回用户保存过的「服务器地址」（桌面 / 安卓手动填）
+     返回空串表示当前没有可用后端，实时源会自动降级到离线数据。 */
+  function apiBase() {
+    const injected = window.__RAINFORM_API_BASE__ || window.RAINFORM_API_BASE;
+    if (injected) return String(injected).replace(/\/+$/, '');
+    try {
+      const q = new URLSearchParams(location.search || '').get('api');
+      if (q) return String(q).replace(/\/+$/, '');
+    } catch (e) {}
+    if (/^https?:$/.test(location.protocol)) {
+      /* 只有网页 / PWA 的「同源」才是后端。安卓壳把页面跑在本地资源服务器上
+         （http://127.0.0.1:<随机端口>），Capacitor 是 capacitor://localhost，
+         拿它们当后端只会 404 —— 这两端必须走显式配置。 */
+      const target = window.__RAINFORM_TARGET__ || '';
+      if (target !== 'android' && target !== 'mobile') return location.origin;
+    }
+    const saved = storeGet(CFG_KEY, {});
+    /* 默认值是内置网关 http://127.0.0.1:8787，只在开发时有效；
+       用户没改过就当作「未配置」，避免桌面/安卓一启动就空转重试。 */
+    if (saved && saved.server && saved.server !== DEFAULTS.server) {
+      return String(saved.server).replace(/\/+$/, '');
+    }
+    return '';
+  }
+
   function saveCfg() {
     const copy = Object.assign({}, cfg);
     delete copy.transform;                 // functions are not serializable
@@ -1745,7 +2067,10 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
     opts = opts || {};
     const method = opts.method || 'GET';
     const headers = Object.assign(authHeaders(), opts.headers || {});
-    const signal = opts.signal;
+    /* 必须是 let：没有外部 signal 时会在这里新建 AbortController 并回填，
+       用 const 会在降级链（无 signal 的 fallback 调用）里抛
+       "Assignment to constant variable."，把整条降级链打断。 */
+    let signal = opts.signal;
     let ac, timer;
     if (!signal && window.AbortController) {
       ac = new AbortController(); signal = ac.signal;
@@ -2037,6 +2362,39 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
   function coordQuery() {
     return qs({ lat: cfg.lat, lon: cfg.lon, city: cfg.city, timezone: cfg.timezone });
   }
+
+  /* -- 0. Rainform 服务器实时降雨（自建后端，serve 版默认源） ----------- */
+  define({
+    id: 'liverain', group: 'server',
+    label: '服务器实时降雨 · LIVE', en: 'Rainform server · LIVE',
+    hint: '按访客 IP 自动定位 · 服务器每 30 分钟刷新缓存 · 需要后端 /api/rainfall',
+    kind: 'poll', needs: [],
+    async fetch(ctx) {
+      const base = apiBase();
+      if (!base) throw new Error('未配置服务器地址（自建服务器 → 服务器地址）');
+      /* 不传 city 时后端按访客 IP 定位；传了就走指定城市。
+         refresh=1 让后端跳过缓存强制回源（后端有 10 秒最小间隔保护）。 */
+      const q = qs({ city: ctx.cfg.city, refresh: ctx.cfg.forceRefresh ? 1 : '' });
+      const raw = await ctx.json(base + '/api/rainfall' + (q ? '?' + q : ''));
+      if (!raw || !Array.isArray(raw.values) || !raw.values.length) {
+        throw new Error('服务器返回的降雨数据格式不正确');
+      }
+      return {
+        schema: SCHEMA,
+        values: raw.values,
+        city: raw.city || ctx.cfg.city,
+        location: {
+          name: raw.city || ctx.cfg.city,
+          lat: raw.lat, lon: raw.lon,
+          timezone: ctx.cfg.timezone
+        },
+        source: raw.source || 'Rainform Server',
+        updatedAt: raw.updated_at,
+        cached: !!raw.cached,
+        mode: 'live'
+      };
+    }
+  });
 
   /* -- 1. offline demo -------------------------------------------------- */
   define({
@@ -2515,6 +2873,166 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 
   window.RainWeather = API;
 
+  /* ---------------------------------------------------- global top rain
+     全球强降雨城市 TOP5，口径见后端 /api/top-rain：UTC 当日 24 个逐时值的
+     平均（mm/h），等级按 24 小时累计标准换算。点击某城 = 把城市名写进
+     「城市」输入框并触发 change，走与手动输入完全相同的链路。 */
+  let trRows = [], trSelected = '', trTimer = 0, trLast = 0, trInflight = null;
+  const TR_HALF = 30 * 60 * 1000;
+
+  function trNode(tag, cls, text) {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function fmtMm(v) {
+    const n = Number(v || 0);
+    return n >= 10 ? n.toFixed(1) : n.toFixed(2);
+  }
+  function trSetStatus(text, warn) {
+    const el = $('trStatus');
+    if (!el) return;
+    el.textContent = text || '';
+    el.className = 'tr-status' + (warn ? ' warn' : '');
+  }
+  function renderTopRain(d) {
+    const list = $('trList');
+    if (!list) return;
+    list.textContent = '';
+    const rows = (d && d.cities) || [];
+    if (!rows.length) {
+      list.appendChild(trNode('div', 'tr-loading', L('榜单暂不可用，稍后点「刷新」重试', 'Ranking unavailable, tap Refresh')));
+      trSetStatus((d && d.error) ? String(d.error) : L('未获取到榜单数据', 'No ranking data'), true);
+      return;
+    }
+    trRows = rows;
+    rows.forEach(x => {
+      const row = trNode('div', 'tr-item');
+      row.setAttribute('role', 'button');
+      row.tabIndex = 0;
+      row.title = x.city + ' · ' + L('日均 ', 'avg ') + fmtMm(x.day_avg) + ' mm/h · ' +
+        L('24h 累计 ', '24h sum ') + fmtMm(x.day_sum) + ' mm · ' + L('峰值 ', 'peak ') + fmtMm(x.day_peak) + ' mm/h';
+      row.appendChild(trNode('span', 'tr-rank', '0' + (x.rank || '?')));
+      const main = trNode('div', 'tr-main');
+      main.appendChild(trNode('div', 'tr-name', x.city));
+      main.appendChild(trNode('div', 'tr-sub',
+        (x.region || '') + ' · ' + (x.level || '') + ' · ' + L('累计 ', 'sum ') + fmtMm(x.day_sum) + ' mm'));
+      row.appendChild(main);
+      const val = trNode('div', 'tr-val');
+      val.appendChild(trNode('div', 'tr-mm', fmtMm(x.day_avg)));
+      val.appendChild(trNode('div', 'tr-unit', L('mm/h 日均', 'mm/h avg')));
+      row.appendChild(val);
+      row.appendChild(trNode('span', 'tr-arrow', '›'));
+      if (trSelected === x.city) row.classList.add('sel');
+      const pick = () => importTopCity(x.city, row);
+      row.addEventListener('click', pick);
+      row.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); }
+      });
+      list.appendChild(row);
+    });
+    const meta = $('trMeta');
+    if (meta) {
+      meta.textContent = L('口径 ', 'Ranked by ') + (d.rank_by || '-') + ' · ' +
+        L('样本 ', 'sample ') + (d.sample_size || 0) + L(' 城', ' cities') + ' · ' +
+        L('更新 ', 'updated ') + (d.updated_at || '-') +
+        (d.cached ? L(' · 缓存', ' · cached') : L(' · 实时回源', ' · fresh')) +
+        (d.stale ? L(' · 上游异常沿用上次', ' · stale upstream') : '') +
+        (d.throttled ? L(' · 60 秒内刚刷新过', ' · throttled') : '');
+    }
+    const note = $('trNote');
+    if (note) { note.textContent = d.note ? String(d.note) : ''; note.title = note.textContent; }
+    trSetStatus(L('点击任一城市，即可自动导入当地 25 个逐时降雨值',
+      'Tap a city to import its 25 hourly values'), false);
+  }
+  function importTopCity(name, row) {
+    const input = $('weatherCity');
+    if (!input) { trSetStatus(L('页面尚未就绪，请稍后再点', 'Not ready yet, try again'), true); return; }
+    trSelected = name;
+    const list = $('trList');
+    if (list) Array.prototype.forEach.call(list.children, n => n.classList.remove('sel'));
+    if (row) row.classList.add('sel');
+    input.value = name;
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    trSetStatus(L('正在导入「', 'Importing ') + name + L('」的 25 个逐时降雨值…', ' hourly values…'), false);
+    /* 以真实数据帧为准给反馈，不用固定延时假装完成 */
+    let tries = 0;
+    const timer = setInterval(() => {
+      tries++;
+      const f = runtime.lastFrame;
+      const fc = f && f.location ? String(f.location.name || '') : '';
+      const hit = fc && (fc.indexOf(name) >= 0 || name.indexOf(fc) >= 0);
+      if (hit) {
+        clearInterval(timer);
+        if (trSelected === name) {
+          trSetStatus(L('已导入 ', 'Imported ') + name + L(' · 雨幕与曲线已更新，每 30 分钟自动刷新',
+            ' · scene updated, refreshes every 30 min'), false);
+        }
+      } else if (tries >= 40) {
+        clearInterval(timer);
+        if (trSelected === name) {
+          trSetStatus(L('已发起导入 ', 'Requested ') + name + L('，若曲线未更新请点「立即拉取」',
+            ', tap Fetch now if the curve did not move'), true);
+        }
+      }
+    }, 300);
+  }
+  async function loadTopRain(force) {
+    const list = $('trList');
+    if (!list) return null;
+    const base = apiBase();
+    if (!base) {
+      list.textContent = '';
+      list.appendChild(trNode('div', 'tr-loading', L('未配置服务器，无法获取全球榜单', 'No server configured')));
+      trSetStatus('', false);
+      return null;
+    }
+    if (trInflight) return trInflight;
+    const btn = $('trRefresh');
+    if (btn) btn.disabled = true;
+    list.textContent = '';
+    list.appendChild(trNode('div', 'tr-loading', L('正在查询全球主要城市的当前雨势…', 'Querying global rainfall…')));
+    trInflight = fetch(base + '/api/top-rain' + (force ? '?refresh=1' : ''), { cache: 'no-store' })
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(d => { trLast = Date.now(); renderTopRain(d); return d; })
+      .catch(e => {
+        list.textContent = '';
+        list.appendChild(trNode('div', 'tr-loading', L('榜单加载失败，点「刷新」重试', 'Failed, tap Refresh')));
+        trSetStatus(L('无法连接降雨数据服务：', 'Cannot reach the rainfall service: ') + (e && e.message ? e.message : e), true);
+        return null;
+      })
+      .then(d => { trInflight = null; if (btn) btn.disabled = false; return d; });
+    return trInflight;
+  }
+  /* 与 server 的 :00 / :30 定时器同拍：整点/半点后延 6 秒再读，避免拿到旧缓存；
+     若当前已过边界 6 秒就直接等下一拍，不在整点刚过时白等半小时。 */
+  function scheduleTopRain() {
+    if (!apiBase()) return;
+    if (trTimer) clearTimeout(trTimer);
+    const now = Date.now();
+    const boundary = Math.floor(now / TR_HALF) * TR_HALF;
+    let target = boundary + 6000;
+    if (target <= now) target = boundary + TR_HALF + 6000;
+    trTimer = setTimeout(() => {
+      loadTopRain(false);
+      trTimer = setInterval(() => loadTopRain(false), TR_HALF);
+    }, Math.max(1000, target - now));
+  }
+  function mountTopRain() {
+    const box = $('trBox');
+    if (!box || box.dataset.bound === '1') return;
+    box.dataset.bound = '1';
+    const btn = $('trRefresh');
+    if (btn) btn.addEventListener('click', () => loadTopRain(true));
+    loadTopRain(false);
+    scheduleTopRain();
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) return;
+      if (Date.now() - trLast > 5 * 60 * 1000) loadTopRain(false);
+    });
+  }
+
   /* ------------------------------------------------------------------- UI */
   let mounted = false;
   const GROUPS = {
@@ -2620,6 +3138,12 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
     }
     const loc = $('weatherLoc');
     if (loc) loc.textContent = f && f.location ? (f.location.name || cfg.city) : cfg.city;
+    /* 服务器按 IP 定位后把城市回填输入框；只在输入框为空时回填，
+       否则会盖掉用户刚点选的城市。也不写回 cfg，下次进入仍会重新定位。 */
+    if (cfg.provider === 'liverain' && f && f.location && f.location.name) {
+      const ci = $('weatherCity');
+      if (ci && document.activeElement !== ci && !ci.value.trim()) ci.value = f.location.name;
+    }
     const upd = $('weatherUpdated');
     if (upd) upd.textContent = f
       ? (fmtAgo(runtime.lastFetchAt) + ' · ' + f.values.length + ' pts')
@@ -2725,6 +3249,16 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
         toast(L('已找到：', 'Found: ') + g.name);
       } catch (e) { toast(L('未找到该城市：', 'City not found: ') + e.message); }
     });
+    /* 城市名改变即拉取（全球榜单点击走的就是这条链路，等价于手动回车） */
+    $('weatherCity').addEventListener('change', () => {
+      const name = $('weatherCity').value.trim();
+      if (!name) return;
+      const patch = { city: name };
+      if (cfg.provider === 'demo') patch.provider = 'liverain';
+      API.configure(patch);
+      try { start(); } catch (e) { log('city change start failed: ' + e.message, 'error'); }
+      toast(L('正在拉取「', 'Fetching ') + name + L('」的数据…', '…'));
+    });
     $('weatherFile').addEventListener('change', e => {
       const file = e.target.files && e.target.files[0]; if (!file) return;
       const r = new FileReader();
@@ -2758,6 +3292,7 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
     window.addEventListener('online', () => { if (runtime.running) refresh('online'); });
     on('frame', render); on('status', render);
 
+    mountTopRain();
     writeForm();
   }
 
@@ -2769,6 +3304,12 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
     try { q = new URLSearchParams(location.search || ''); }
     catch (e) { log('URL params unavailable: ' + e.message, 'error'); return; }
     if (!q.toString()) return;
+    /* ?api=https://host —— 桌面/app 壳可以把后端地址直接带进来，
+       优先级高于「同源」，也高于已保存的服务器地址 */
+    if (q.has('api')) {
+      try { window.__RAINFORM_API_BASE__ = String(q.get('api')).replace(/\/+$/, ''); } catch (e) {}
+    }
+    if (q.has('weather')) urlExplicitProvider = true;
     const patch = {};
     const str = ['city', 'server', 'url', 'token', 'apiKey', 'apiHost', 'mqttUrl', 'topic', 'timezone'];
     str.forEach(k => { if (q.has(k)) patch[k] = q.get(k); });
@@ -2797,12 +3338,34 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 
   /* app.js boots synchronously right after this file; defer UI wiring by one
      tick so window.Rainform already exists when we start applying frames. */
+  /* 有后端时（网页 / PWA，以及配好地址的桌面与安卓）：
+     默认走服务器实时源，并清掉上次手动选的城市 —— 每次进入都按访客 IP 重新定位。
+     用户明确选过别的数据源（open-meteo / 自建 REST 等）时不动他的选择。 */
+  function applyServerDefaults() {
+    if (!apiBase()) return;
+    /* URL / 启动参数里明确写了 weather=xxx，就按用户说的来 */
+    if (urlExplicitProvider) return;
+    if (cfg.provider !== 'liverain' && cfg.provider !== 'demo') return;
+    let dirty = false;
+    if (cfg.provider !== 'liverain') { cfg.provider = 'liverain'; dirty = true; }
+    if (cfg.city) { cfg.city = ''; dirty = true; }
+    if (!cfg.autoStart) { cfg.autoStart = true; dirty = true; }
+    if (dirty) { saveCfg(); try { writeForm(); } catch (e) {} }
+  }
+
+  /* URL 是否明确指定过数据源（显式指定时不做「默认走服务器」的覆盖） */
+  let urlExplicitProvider = false;
   let bridgeStarted = false;
   function startBridge() {
     if (bridgeStarted) return;
     bridgeStarted = true;
     try { mount(); } catch (e) { log('mount failed: ' + e.message, 'error'); }
+    /* URL / 启动参数优先落地（?api= / ?weather= / ?city=），再补服务器默认值 */
     try { bootFromURL(); } catch (e) { log('URL boot failed: ' + e.message, 'error'); }
+    try { applyServerDefaults(); } catch (e) { log('server defaults failed: ' + e.message, 'error'); }
+    if (cfg.autoStart && !runtime.running) {
+      try { start(); } catch (e) { log('auto start failed: ' + e.message, 'error'); }
+    }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(startBridge, 0));
   else setTimeout(startBridge, 0);
@@ -2870,11 +3433,67 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
     random:  null
   };
   let data = DEFAULT_DATA.slice();
-  const N = 25, HOURS = 24, MAX_MM = 20;
+  const N = 25, HOURS = 24;
+
+  /* --------------------------------------------------------------- y-axis
+     「强化显示」(boost) 把 Y 轴上限换成当天实际峰值，小雨的起伏才看得出来。
+     默认 20 mm/h；开启后按 max(data) * 1.1 向上取一位小数，下限 0.5。
+     增益同步缩放 heightPerMm，使 heightOf(MAX_MM) 恒为 1.6 + 20*0.88，
+     3D 柱高与轴刻度一一对应，且轴几何无需按上限重建。 */
+  let MAX_MM = 20;
+  const BASE_HPM = CFG.heightPerMm;
+  let boostOn = false;
+  let axisRebuildTimer = 0;
+
+  function axisTop() {
+    if (!boostOn) return 20;
+    const peak = Math.max.apply(null, data);
+    return Math.max(0.5, Math.ceil(peak * 1.1 * 10) / 10);
+  }
+  function scheduleAxisRebuild() {
+    clearTimeout(axisRebuildTimer);
+    axisRebuildTimer = setTimeout(() => { rebuildYAxis(); }, 260);
+  }
+  function recalcAxis(force) {
+    /* 拖动曲线时锁定上限，避免「拖高 → 上限变大 → 曲线变矮」的反馈抖动 */
+    if (!force && state.dragCurve >= 0) return;
+    const next = axisTop();
+    const changed = Math.abs(next - MAX_MM) > 0.001;
+    MAX_MM = next;
+    CFG.heightPerMm = BASE_HPM * (20 / MAX_MM);
+    if (U && U.uHeightPerMm) U.uHeightPerMm.value = CFG.heightPerMm;
+    if (changed && boostOn) {
+      scheduleAxisRebuild();
+      const bb = $('boostBtn');
+      if (bb) bb.title = boostTitle(true);
+    }
+  }
+  function boostTitle(on) {
+    const zh = state.lang === 'zh';
+    if (!on) return zh ? '强化显示：把当天最大雨量设为 Y 轴上限，让小雨的起伏更清楚'
+      : 'Boost: fit the Y axis to today\'s peak so light rain stays readable';
+    return zh ? ('强化显示已开启 · Y 轴 0–' + MAX_MM.toFixed(1) + ' mm/h（点击关闭）')
+      : ('Boost on · Y axis 0–' + MAX_MM.toFixed(1) + ' mm/h (click to turn off)');
+  }
+  function setBoost(on) {
+    boostOn = !!on;
+    clearTimeout(axisRebuildTimer);
+    recalcAxis(true);
+    rebuildYAxis();
+    updateRainData();
+    drawCurve();
+    const b = $('boostBtn');
+    if (b) {
+      b.classList.toggle('active', boostOn);
+      b.setAttribute('aria-pressed', String(boostOn));
+      b.title = boostTitle(boostOn);
+    }
+    try { localStorage.setItem('rainform.boost', boostOn ? '1' : '0'); } catch (e) {}
+  }
 
   const state = {
     t: 18, playing: true, speedIdx: 1, speeds: [0.5, 1, 2],
-    q: 2, lang: 'zh', panelsHidden: false, wallpaper: false,
+    q: 3, lang: 'zh', panelsHidden: true, wallpaper: false,
     autoRotate: false, sound: false,
     theta: 30 * RAD, phi: 60 * RAD, radius: 40,
     tTheta: 30 * RAD, tPhi: 60 * RAD, tRadius: 40,
@@ -3031,6 +3650,7 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
     $('dropValue').textContent = (total / 1000).toFixed(1) + 'k';
   }
   function updateRainData() {
+    recalcAxis();
     rebuildLUT();
     if (!rainGeo) return;
     const pos = rainGeo.getAttribute('position');
@@ -3515,13 +4135,32 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
   }
   const yx = x0 - 0.15;
   addAxis([yx, 0.02, zF], [yx, heightOf(20) + 0.8, zF]);
-  for (const v of [0, 5, 10, 15, 20]) {
-    const y = heightOf(v);
-    addAxis([yx, y, zF], [yx + 0.35, y, zF]);
-    const s = makeLabel(String(v), 'rgba(168,230,200,0.9)', 1.9);
-    s.position.set(yx - 1.0, y, zF);
-    chartLabels.push(s); scene.add(s);
+  /* 刻度位置固定（k/4 分位），只有数值随 MAX_MM 变。因为 heightOf() 用
+     heightPerMm 做了增益抵消，heightOf(MAX_MM * k/4) 与 MAX_MM 无关，
+     所以刻度线只建一次，重建时只换标签 —— 与服务器版一致。 */
+  const yAxisLabels = [];
+  let yAxisSegReady = false;
+  function rebuildYAxis() {
+    yAxisLabels.forEach(sprite => {
+      scene.remove(sprite);
+      const i = chartLabels.indexOf(sprite);
+      if (i >= 0) chartLabels.splice(i, 1);
+      try { sprite.material.map.dispose(); } catch (e) {}
+      sprite.material.dispose();
+    });
+    yAxisLabels.length = 0;
+    for (let k = 0; k <= 4; k++) {
+      const v = MAX_MM * k / 4, y = heightOf(v);
+      if (!yAxisSegReady) addAxis([yx, y, zF], [yx + 0.35, y, zF]);
+      const label = MAX_MM < 10 ? v.toFixed(1) : String(Math.round(v));
+      const sprite = makeLabel(label, 'rgba(168,230,200,0.9)', 1.9);
+      sprite.position.set(yx - 1.0, y, zF);
+      sprite.visible = state.chartOn;
+      chartLabels.push(sprite); yAxisLabels.push(sprite); scene.add(sprite);
+    }
+    yAxisSegReady = true;
   }
+  rebuildYAxis();
   addAxis([x0, 0.02, -CFG.HD], [x0, 0.02, CFG.HD]);
   const axisGeo = new TH.BufferGeometry();
   axisGeo.setAttribute('position', new TH.Float32BufferAttribute(axisPts, 3));
@@ -3876,7 +4515,10 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
   function setPanels(hidden) {
     state.panelsHidden = hidden;
     app.classList.toggle('panels-hidden', hidden);
-    $('fabToggle').setAttribute('aria-pressed', String(hidden));
+    /* 悬浮「显示面板」按钮已按服务器版移除；保留空值保护，
+       否则任何残留引用都会在初始化阶段抛错、中断整页脚本。 */
+    const fab = $('fabToggle');
+    if (fab) fab.setAttribute('aria-pressed', String(hidden));
   }
 
   /* The "line chart" is both the 3D data overlay and the 2D editor graph.
@@ -3924,6 +4566,7 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
       ? (state.lang === 'zh' ? '壁纸模式 · 按 W / Esc 或点击画面退出' : 'Wallpaper · press W / Esc or tap to exit')
       : (state.lang === 'zh' ? '已退出壁纸模式' : 'Wallpaper off'));
   }
+
   function applyLang() {
     document.querySelectorAll('[data-zh]').forEach(el => {
       const v = state.lang === 'zh' ? el.dataset.zh : el.dataset.en;
@@ -3933,6 +4576,9 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
     document.documentElement.lang = state.lang === 'zh' ? 'zh-CN' : 'en';
     syncPlay();
     syncCurveUI();
+    const bb = $('boostBtn');
+    if (bb) bb.title = boostTitle(boostOn);
+    if (window.RainBackdrop) window.RainBackdrop.refreshLang();
   }
   function syncPlay() {
     $('playIcon').textContent = state.playing ? '❚❚' : '▶';
@@ -4013,6 +4659,7 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
   $('curveBtn').addEventListener('click', () => setChart(!state.chartOn));
   $('miniChart').addEventListener('click', () => setChart(!state.chartOn));
   $('smoothBtn').addEventListener('click', () => setSmooth(!state.smooth));
+  $('boostBtn').addEventListener('click', () => setBoost(!boostOn));
   $('smoothRange').addEventListener('input', e => {
     state.smoothAmt = clamp(+e.target.value / 100, 0, 1);
     if (!state.smooth) state.smooth = true;
@@ -4023,16 +4670,8 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
   });
   $('smoothRange').addEventListener('change', () => { updateRainData(); syncCurveUI(); });
   $('panelToggle').addEventListener('click', () => setPanels(!state.panelsHidden));
-  $('fabToggle').addEventListener('click', () => {
-    if (state.wallpaper) { toggleWallpaper(); return; }
-    setPanels(!state.panelsHidden);
-  });
   $('miniRotate').addEventListener('click', () => rotateBy(30));
   $('miniPlay').addEventListener('click', () => { state.playing = !state.playing; syncPlay(); });
-  $('miniShow').addEventListener('click', () => {
-    if (state.wallpaper) { toggleWallpaper(); return; }
-    setPanels(false);
-  });
   canvas.addEventListener('click', () => {
     if (state.wallpaper && (!ptr || ptr.moved < 6)) toggleWallpaper();
   });
@@ -4123,24 +4762,19 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 
   /* ------------------------------------------------------------------ boot */
   function boot() {
-    // pick a sensible initial quality tier
     const params = new URLSearchParams(location.search);
-    const mobile = /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent) || window.innerWidth < 760;
-    const cores = navigator.hardwareConcurrency || 8;
-    let q = 2;
-    if (mobile || cores <= 4) q = 1;
-    if (window.innerWidth >= 1400 && cores >= 8 && !mobile) q = 3;
+    /* 默认「极致」，与服务器版一致；只有老 Android WebView（__RAINFORM_LOW__）
+       才强制降到最低档 —— 那里没有 WebGL2 / instancing，高画质会卡死主线程。 */
+    let q = 3;
     if (params.has('q')) q = clamp(parseInt(params.get('q'), 10) || 0, 0, 3);
-    /* Old Android System WebView builds (Chrome <= 86) expose only WebGL1 and
-       sometimes lack ANGLE_instanced_arrays. Keep the scene usable there by
-       forcing the lightest tier and skipping the bloom pass. The flag is set
-       by the native Android shell before any other script runs. */
     if (window.__RAINFORM_LOW__) {
       q = 0;
       QUALITY[0].bloom = 0;
       QUALITY[0].dpr = 1;
+      document.body.classList.add('low-end');
     }
     setQuality(q, true);
+    setPanels(state.panelsHidden);
     if (params.has('preset') && PRESETS[params.get('preset')] || params.get('preset') === 'random') {
       applyPreset(params.get('preset'));
     }
@@ -4153,17 +4787,27 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
     updatePools();
     updateSurface();
     applyLang();
+    /* 背景色板：共享模块，2D 兜底渲染器也走同一份 */
+    if (window.RainBackdrop) {
+      window.RainBackdrop.init({ scene: scene, renderer: renderer, lang: () => state.lang });
+    }
+    /* 「强化显示」默认开启；用户手动关过（存了 '0'）才尊重其选择 */
+    try { if (localStorage.getItem('rainform.boost') !== '0') setBoost(true); }
+    catch (e) { setBoost(true); }
     syncCurveUI();
     syncPlay();
     updateUI();
     resize();
     setTimeout(() => $('loader').classList.add('done'), 620);
     requestAnimationFrame(frame);
+    /* 背景切换器与自动化测试需要直接够到场景对象 */
+    window.__rainScene = scene;
+    window.__rainRenderer = renderer;
     // expose a tiny API for automation / wallpaper engines
     window.Rainform = {
       update(values) {
         if (!Array.isArray(values) || values.length !== 25) return;
-        data = values.map(v => clamp(+v || 0, 0, MAX_MM));
+        data = values.map(v => clamp(+v || 0, 0, 20));
         updateRainData();
       },
       rotate: rotateBy,
@@ -4171,6 +4815,13 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
       setChart,
       setSmooth,
       setPanels,
+      setBoost,
+      setBackdrop(key) {
+        return window.RainBackdrop ? window.RainBackdrop.apply(key) : key;
+      },
+      get boost() { return boostOn; },
+      get axisMax() { return MAX_MM; },
+      get backdrop() { return window.RainBackdrop ? window.RainBackdrop.current.key : 'origin'; },
       setTime(t) { state.t = clamp(t, 0, 24); },
       audioMix: mmh => RA.mix(mmh),
       impactStats,

@@ -44,11 +44,67 @@
     random:  null
   };
   let data = DEFAULT_DATA.slice();
-  const N = 25, HOURS = 24, MAX_MM = 20;
+  const N = 25, HOURS = 24;
+
+  /* --------------------------------------------------------------- y-axis
+     「强化显示」(boost) 把 Y 轴上限换成当天实际峰值，小雨的起伏才看得出来。
+     默认 20 mm/h；开启后按 max(data) * 1.1 向上取一位小数，下限 0.5。
+     增益同步缩放 heightPerMm，使 heightOf(MAX_MM) 恒为 1.6 + 20*0.88，
+     3D 柱高与轴刻度一一对应，且轴几何无需按上限重建。 */
+  let MAX_MM = 20;
+  const BASE_HPM = CFG.heightPerMm;
+  let boostOn = false;
+  let axisRebuildTimer = 0;
+
+  function axisTop() {
+    if (!boostOn) return 20;
+    const peak = Math.max.apply(null, data);
+    return Math.max(0.5, Math.ceil(peak * 1.1 * 10) / 10);
+  }
+  function scheduleAxisRebuild() {
+    clearTimeout(axisRebuildTimer);
+    axisRebuildTimer = setTimeout(() => { rebuildYAxis(); }, 260);
+  }
+  function recalcAxis(force) {
+    /* 拖动曲线时锁定上限，避免「拖高 → 上限变大 → 曲线变矮」的反馈抖动 */
+    if (!force && state.dragCurve >= 0) return;
+    const next = axisTop();
+    const changed = Math.abs(next - MAX_MM) > 0.001;
+    MAX_MM = next;
+    CFG.heightPerMm = BASE_HPM * (20 / MAX_MM);
+    if (U && U.uHeightPerMm) U.uHeightPerMm.value = CFG.heightPerMm;
+    if (changed && boostOn) {
+      scheduleAxisRebuild();
+      const bb = $('boostBtn');
+      if (bb) bb.title = boostTitle(true);
+    }
+  }
+  function boostTitle(on) {
+    const zh = state.lang === 'zh';
+    if (!on) return zh ? '强化显示：把当天最大雨量设为 Y 轴上限，让小雨的起伏更清楚'
+      : 'Boost: fit the Y axis to today\'s peak so light rain stays readable';
+    return zh ? ('强化显示已开启 · Y 轴 0–' + MAX_MM.toFixed(1) + ' mm/h（点击关闭）')
+      : ('Boost on · Y axis 0–' + MAX_MM.toFixed(1) + ' mm/h (click to turn off)');
+  }
+  function setBoost(on) {
+    boostOn = !!on;
+    clearTimeout(axisRebuildTimer);
+    recalcAxis(true);
+    rebuildYAxis();
+    updateRainData();
+    drawCurve();
+    const b = $('boostBtn');
+    if (b) {
+      b.classList.toggle('active', boostOn);
+      b.setAttribute('aria-pressed', String(boostOn));
+      b.title = boostTitle(boostOn);
+    }
+    try { localStorage.setItem('rainform.boost', boostOn ? '1' : '0'); } catch (e) {}
+  }
 
   const state = {
     t: 18, playing: true, speedIdx: 1, speeds: [0.5, 1, 2],
-    q: 2, lang: 'zh', panelsHidden: false, wallpaper: false,
+    q: 3, lang: 'zh', panelsHidden: true, wallpaper: false,
     autoRotate: false, sound: false,
     theta: 30 * RAD, phi: 60 * RAD, radius: 40,
     tTheta: 30 * RAD, tPhi: 60 * RAD, tRadius: 40,
@@ -205,6 +261,7 @@
     $('dropValue').textContent = (total / 1000).toFixed(1) + 'k';
   }
   function updateRainData() {
+    recalcAxis();
     rebuildLUT();
     if (!rainGeo) return;
     const pos = rainGeo.getAttribute('position');
@@ -689,13 +746,32 @@
   }
   const yx = x0 - 0.15;
   addAxis([yx, 0.02, zF], [yx, heightOf(20) + 0.8, zF]);
-  for (const v of [0, 5, 10, 15, 20]) {
-    const y = heightOf(v);
-    addAxis([yx, y, zF], [yx + 0.35, y, zF]);
-    const s = makeLabel(String(v), 'rgba(168,230,200,0.9)', 1.9);
-    s.position.set(yx - 1.0, y, zF);
-    chartLabels.push(s); scene.add(s);
+  /* 刻度位置固定（k/4 分位），只有数值随 MAX_MM 变。因为 heightOf() 用
+     heightPerMm 做了增益抵消，heightOf(MAX_MM * k/4) 与 MAX_MM 无关，
+     所以刻度线只建一次，重建时只换标签 —— 与服务器版一致。 */
+  const yAxisLabels = [];
+  let yAxisSegReady = false;
+  function rebuildYAxis() {
+    yAxisLabels.forEach(sprite => {
+      scene.remove(sprite);
+      const i = chartLabels.indexOf(sprite);
+      if (i >= 0) chartLabels.splice(i, 1);
+      try { sprite.material.map.dispose(); } catch (e) {}
+      sprite.material.dispose();
+    });
+    yAxisLabels.length = 0;
+    for (let k = 0; k <= 4; k++) {
+      const v = MAX_MM * k / 4, y = heightOf(v);
+      if (!yAxisSegReady) addAxis([yx, y, zF], [yx + 0.35, y, zF]);
+      const label = MAX_MM < 10 ? v.toFixed(1) : String(Math.round(v));
+      const sprite = makeLabel(label, 'rgba(168,230,200,0.9)', 1.9);
+      sprite.position.set(yx - 1.0, y, zF);
+      sprite.visible = state.chartOn;
+      chartLabels.push(sprite); yAxisLabels.push(sprite); scene.add(sprite);
+    }
+    yAxisSegReady = true;
   }
+  rebuildYAxis();
   addAxis([x0, 0.02, -CFG.HD], [x0, 0.02, CFG.HD]);
   const axisGeo = new TH.BufferGeometry();
   axisGeo.setAttribute('position', new TH.Float32BufferAttribute(axisPts, 3));
@@ -1050,7 +1126,10 @@
   function setPanels(hidden) {
     state.panelsHidden = hidden;
     app.classList.toggle('panels-hidden', hidden);
-    $('fabToggle').setAttribute('aria-pressed', String(hidden));
+    /* 悬浮「显示面板」按钮已按服务器版移除；保留空值保护，
+       否则任何残留引用都会在初始化阶段抛错、中断整页脚本。 */
+    const fab = $('fabToggle');
+    if (fab) fab.setAttribute('aria-pressed', String(hidden));
   }
 
   /* The "line chart" is both the 3D data overlay and the 2D editor graph.
@@ -1098,6 +1177,7 @@
       ? (state.lang === 'zh' ? '壁纸模式 · 按 W / Esc 或点击画面退出' : 'Wallpaper · press W / Esc or tap to exit')
       : (state.lang === 'zh' ? '已退出壁纸模式' : 'Wallpaper off'));
   }
+
   function applyLang() {
     document.querySelectorAll('[data-zh]').forEach(el => {
       const v = state.lang === 'zh' ? el.dataset.zh : el.dataset.en;
@@ -1107,6 +1187,9 @@
     document.documentElement.lang = state.lang === 'zh' ? 'zh-CN' : 'en';
     syncPlay();
     syncCurveUI();
+    const bb = $('boostBtn');
+    if (bb) bb.title = boostTitle(boostOn);
+    if (window.RainBackdrop) window.RainBackdrop.refreshLang();
   }
   function syncPlay() {
     $('playIcon').textContent = state.playing ? '❚❚' : '▶';
@@ -1187,6 +1270,7 @@
   $('curveBtn').addEventListener('click', () => setChart(!state.chartOn));
   $('miniChart').addEventListener('click', () => setChart(!state.chartOn));
   $('smoothBtn').addEventListener('click', () => setSmooth(!state.smooth));
+  $('boostBtn').addEventListener('click', () => setBoost(!boostOn));
   $('smoothRange').addEventListener('input', e => {
     state.smoothAmt = clamp(+e.target.value / 100, 0, 1);
     if (!state.smooth) state.smooth = true;
@@ -1197,16 +1281,8 @@
   });
   $('smoothRange').addEventListener('change', () => { updateRainData(); syncCurveUI(); });
   $('panelToggle').addEventListener('click', () => setPanels(!state.panelsHidden));
-  $('fabToggle').addEventListener('click', () => {
-    if (state.wallpaper) { toggleWallpaper(); return; }
-    setPanels(!state.panelsHidden);
-  });
   $('miniRotate').addEventListener('click', () => rotateBy(30));
   $('miniPlay').addEventListener('click', () => { state.playing = !state.playing; syncPlay(); });
-  $('miniShow').addEventListener('click', () => {
-    if (state.wallpaper) { toggleWallpaper(); return; }
-    setPanels(false);
-  });
   canvas.addEventListener('click', () => {
     if (state.wallpaper && (!ptr || ptr.moved < 6)) toggleWallpaper();
   });
@@ -1297,24 +1373,19 @@
 
   /* ------------------------------------------------------------------ boot */
   function boot() {
-    // pick a sensible initial quality tier
     const params = new URLSearchParams(location.search);
-    const mobile = /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent) || window.innerWidth < 760;
-    const cores = navigator.hardwareConcurrency || 8;
-    let q = 2;
-    if (mobile || cores <= 4) q = 1;
-    if (window.innerWidth >= 1400 && cores >= 8 && !mobile) q = 3;
+    /* 默认「极致」，与服务器版一致；只有老 Android WebView（__RAINFORM_LOW__）
+       才强制降到最低档 —— 那里没有 WebGL2 / instancing，高画质会卡死主线程。 */
+    let q = 3;
     if (params.has('q')) q = clamp(parseInt(params.get('q'), 10) || 0, 0, 3);
-    /* Old Android System WebView builds (Chrome <= 86) expose only WebGL1 and
-       sometimes lack ANGLE_instanced_arrays. Keep the scene usable there by
-       forcing the lightest tier and skipping the bloom pass. The flag is set
-       by the native Android shell before any other script runs. */
     if (window.__RAINFORM_LOW__) {
       q = 0;
       QUALITY[0].bloom = 0;
       QUALITY[0].dpr = 1;
+      document.body.classList.add('low-end');
     }
     setQuality(q, true);
+    setPanels(state.panelsHidden);
     if (params.has('preset') && PRESETS[params.get('preset')] || params.get('preset') === 'random') {
       applyPreset(params.get('preset'));
     }
@@ -1327,17 +1398,27 @@
     updatePools();
     updateSurface();
     applyLang();
+    /* 背景色板：共享模块，2D 兜底渲染器也走同一份 */
+    if (window.RainBackdrop) {
+      window.RainBackdrop.init({ scene: scene, renderer: renderer, lang: () => state.lang });
+    }
+    /* 「强化显示」默认开启；用户手动关过（存了 '0'）才尊重其选择 */
+    try { if (localStorage.getItem('rainform.boost') !== '0') setBoost(true); }
+    catch (e) { setBoost(true); }
     syncCurveUI();
     syncPlay();
     updateUI();
     resize();
     setTimeout(() => $('loader').classList.add('done'), 620);
     requestAnimationFrame(frame);
+    /* 背景切换器与自动化测试需要直接够到场景对象 */
+    window.__rainScene = scene;
+    window.__rainRenderer = renderer;
     // expose a tiny API for automation / wallpaper engines
     window.Rainform = {
       update(values) {
         if (!Array.isArray(values) || values.length !== 25) return;
-        data = values.map(v => clamp(+v || 0, 0, MAX_MM));
+        data = values.map(v => clamp(+v || 0, 0, 20));
         updateRainData();
       },
       rotate: rotateBy,
@@ -1345,6 +1426,13 @@
       setChart,
       setSmooth,
       setPanels,
+      setBoost,
+      setBackdrop(key) {
+        return window.RainBackdrop ? window.RainBackdrop.apply(key) : key;
+      },
+      get boost() { return boostOn; },
+      get axisMax() { return MAX_MM; },
+      get backdrop() { return window.RainBackdrop ? window.RainBackdrop.current.key : 'origin'; },
       setTime(t) { state.t = clamp(t, 0, 24); },
       audioMix: mmh => RA.mix(mmh),
       impactStats,

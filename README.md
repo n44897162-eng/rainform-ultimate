@@ -4,6 +4,7 @@
 
 同一份源码产出 **网页端（单文件 / PWA）、Windows PC 端（Electron）、Android 端（原生 WebView）** 三个平台；苹果端按需求未纳入本轮交付。
 
+
 ## 快速开始
 
 ```bash
@@ -31,6 +32,9 @@ node weather/server/server.js --root app/pwa --verbose
 | 3D 旋转 | 30° 步进、拖拽轨道相机、阻尼、角度读数同步、自动旋转 |
 | 数据可视化 | 25 点逐时降雨柱状曲面、发光折线、坐标轴、曲线编辑器拖拽 |
 | 图表与拟合 | 图表整体开关（API / 按钮 / 快捷键 `C`）；Catmull-Rom 平滑拟合、`S` 键、0–100% 拟合度 |
+| 强化显示 | Y 轴上限改为当天峰值 ×1.1，小雨起伏清晰可读；默认开启，可持久化关闭 |
+| 雨幕背景 | 8 色板（初始 / 曜黑 / 深靛 / 墨绿 / 暗紫 / 赤褐 / 石墨 / 白昼）；白昼用 canvas 反色，UI 同步转亮色 |
+| 全球雨榜 | 天气面板内 TOP5 强降雨城市，点击即导入该城 25 个逐时值，每 30 分钟整点/半点同拍刷新 |
 | 播放与时间轴 | 播放暂停、0–24h 拖动、数据预设 |
 | 画质 | 低 / 中 / 高 / 极致四档，DPR、雨丝数、Bloom 强度联动 |
 | 音频 | 三层 WebAudio 雨声，按 mm/h 非线性映射，动态范围约 100 倍 |
@@ -60,7 +64,8 @@ Rainform-Ultimate/
 │  ├─ app.js       雨景主程序（WebGL / 交互 / 曲线 / 30° 旋转）
 │  ├─ shaders.js   GLSL：雨幕、水面、涟漪、冠花飞溅、Bloom
 │  ├─ audio.js     三层 WebAudio 雨声
-│  ├─ weather.js   RainWeather v1 实时数据桥 + 数据源面板
+│  ├─ weather.js   RainWeather v1 实时数据桥 + 数据源面板 + 全球雨榜
+│  ├─ backdrop.js   雨幕背景色板（WebGL 与 Canvas 2D 共用）
 │  └─ style.css    UI 样式与响应式布局
 ├─ vendor/three.min.js            本地 Three.js，不联网
 ├─ weather/server/                零依赖参考服务端（REST / 爬取 / SSE / WS / 长轮询 / 推送）
@@ -71,17 +76,17 @@ Rainform-Ultimate/
 │  └─ mobile/                     Capacitor 工程（预留，苹果端本轮未交付）
 ├─ tools/                         构建与验证脚本
 ├─ tests/                         三端统一测试套件与报告
-├─ docs/                          平台、API、构建与老 WebView 渲染文档
+├─ docs/                          平台、API、构建、老 WebView 渲染与版本记录
 └─ archive/                       早期版本原样保留
 ```
 
 ## 测试与验证
 
-三端共用一份功能契约 `tests/contract.js`（每端 70 项，A 启动渲染 / B 3D 旋转 / C 图表拟合 / D 数据播放 / E UI / F 实时天气 / G 边界 / H 平台差异）：
+三端共用一份功能契约 `tests/contract.js`（每端 73 项，A 启动渲染 / B 3D 旋转 / C 图表拟合 / D 数据播放 / E UI（含强化显示、背景色板、全球雨榜）/ F 实时天气 / G 边界 / H 平台差异）：
 
 | 验证 | 命令 | 结果 |
 | --- | --- | --- |
-| 三端统一契约 | `node tests/run.js` | **207 通过 / 0 失败 / 3 项平台不适用跳过** |
+| 三端统一契约 | `node tests/run.js` | **216 通过 / 0 失败 / 3 项平台不适用跳过**（web 72/0/1、win 72/0/1、android 72/0/1） |
 | 网页端回归 | `node tools/verify.js` | **41/41** |
 | 安装包实装 | `node tests/smoke-installers.js` | **9/9**（静默安装 → 启动 → CDP 校验 3D 旋转 → 卸载、便携版启动、APK 签名） |
 
@@ -95,6 +100,7 @@ Rainform-Ultimate/
 - `docs/WEATHER-API.md` — 数据契约、11 种数据源、自定义适配器、字段映射、降级链
 - `docs/APPS.md` — PC / Android 完整构建与发布步骤
 - `docs/LEGACY-RENDERER.md` — Android 老 WebView 的等效 Canvas 2D 后端
+- `docs/CHANGELOG.md` — 版本记录：三端功能同步、缺陷修复与验证结果
 - `weather/server/README.md` — 服务端接口与 curl 示例
 - `tests/README.md` — 测试工具安装、用例结构与报告说明
 

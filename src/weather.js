@@ -99,6 +99,36 @@
   let cfg = Object.assign({}, DEFAULTS, storeGet(CFG_KEY, {}));
   cfg.mapping = Object.assign({}, DEFAULTS.mapping, cfg.mapping || {});
 
+  /* ------------------------------------------------------------ api base
+     三端取后端地址的顺序（前者优先）：
+       1. 打包时注入的 window.__RAINFORM_API_BASE__（Electron / 安卓壳可预置）
+       2. 页面 URL 上的 ?api=https://your-host（分享链接临时切后端）
+       3. 同源 —— 网页 / PWA 直接请求同源的 /api/
+       4. file:// 下退回用户保存过的「服务器地址」（桌面 / 安卓手动填）
+     返回空串表示当前没有可用后端，实时源会自动降级到离线数据。 */
+  function apiBase() {
+    const injected = window.__RAINFORM_API_BASE__ || window.RAINFORM_API_BASE;
+    if (injected) return String(injected).replace(/\/+$/, '');
+    try {
+      const q = new URLSearchParams(location.search || '').get('api');
+      if (q) return String(q).replace(/\/+$/, '');
+    } catch (e) {}
+    if (/^https?:$/.test(location.protocol)) {
+      /* 只有网页 / PWA 的「同源」才是后端。安卓壳把页面跑在本地资源服务器上
+         （http://127.0.0.1:<随机端口>），Capacitor 是 capacitor://localhost，
+         拿它们当后端只会 404 —— 这两端必须走显式配置。 */
+      const target = window.__RAINFORM_TARGET__ || '';
+      if (target !== 'android' && target !== 'mobile') return location.origin;
+    }
+    const saved = storeGet(CFG_KEY, {});
+    /* 默认值是内置网关 http://127.0.0.1:8787，只在开发时有效；
+       用户没改过就当作「未配置」，避免桌面/安卓一启动就空转重试。 */
+    if (saved && saved.server && saved.server !== DEFAULTS.server) {
+      return String(saved.server).replace(/\/+$/, '');
+    }
+    return '';
+  }
+
   function saveCfg() {
     const copy = Object.assign({}, cfg);
     delete copy.transform;                 // functions are not serializable
@@ -190,7 +220,10 @@
     opts = opts || {};
     const method = opts.method || 'GET';
     const headers = Object.assign(authHeaders(), opts.headers || {});
-    const signal = opts.signal;
+    /* 必须是 let：没有外部 signal 时会在这里新建 AbortController 并回填，
+       用 const 会在降级链（无 signal 的 fallback 调用）里抛
+       "Assignment to constant variable."，把整条降级链打断。 */
+    let signal = opts.signal;
     let ac, timer;
     if (!signal && window.AbortController) {
       ac = new AbortController(); signal = ac.signal;
@@ -482,6 +515,39 @@
   function coordQuery() {
     return qs({ lat: cfg.lat, lon: cfg.lon, city: cfg.city, timezone: cfg.timezone });
   }
+
+  /* -- 0. Rainform 服务器实时降雨（自建后端，serve 版默认源） ----------- */
+  define({
+    id: 'liverain', group: 'server',
+    label: '服务器实时降雨 · LIVE', en: 'Rainform server · LIVE',
+    hint: '按访客 IP 自动定位 · 服务器每 30 分钟刷新缓存 · 需要后端 /api/rainfall',
+    kind: 'poll', needs: [],
+    async fetch(ctx) {
+      const base = apiBase();
+      if (!base) throw new Error('未配置服务器地址（自建服务器 → 服务器地址）');
+      /* 不传 city 时后端按访客 IP 定位；传了就走指定城市。
+         refresh=1 让后端跳过缓存强制回源（后端有 10 秒最小间隔保护）。 */
+      const q = qs({ city: ctx.cfg.city, refresh: ctx.cfg.forceRefresh ? 1 : '' });
+      const raw = await ctx.json(base + '/api/rainfall' + (q ? '?' + q : ''));
+      if (!raw || !Array.isArray(raw.values) || !raw.values.length) {
+        throw new Error('服务器返回的降雨数据格式不正确');
+      }
+      return {
+        schema: SCHEMA,
+        values: raw.values,
+        city: raw.city || ctx.cfg.city,
+        location: {
+          name: raw.city || ctx.cfg.city,
+          lat: raw.lat, lon: raw.lon,
+          timezone: ctx.cfg.timezone
+        },
+        source: raw.source || 'Rainform Server',
+        updatedAt: raw.updated_at,
+        cached: !!raw.cached,
+        mode: 'live'
+      };
+    }
+  });
 
   /* -- 1. offline demo -------------------------------------------------- */
   define({
@@ -960,6 +1026,166 @@
 
   window.RainWeather = API;
 
+  /* ---------------------------------------------------- global top rain
+     全球强降雨城市 TOP5，口径见后端 /api/top-rain：UTC 当日 24 个逐时值的
+     平均（mm/h），等级按 24 小时累计标准换算。点击某城 = 把城市名写进
+     「城市」输入框并触发 change，走与手动输入完全相同的链路。 */
+  let trRows = [], trSelected = '', trTimer = 0, trLast = 0, trInflight = null;
+  const TR_HALF = 30 * 60 * 1000;
+
+  function trNode(tag, cls, text) {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function fmtMm(v) {
+    const n = Number(v || 0);
+    return n >= 10 ? n.toFixed(1) : n.toFixed(2);
+  }
+  function trSetStatus(text, warn) {
+    const el = $('trStatus');
+    if (!el) return;
+    el.textContent = text || '';
+    el.className = 'tr-status' + (warn ? ' warn' : '');
+  }
+  function renderTopRain(d) {
+    const list = $('trList');
+    if (!list) return;
+    list.textContent = '';
+    const rows = (d && d.cities) || [];
+    if (!rows.length) {
+      list.appendChild(trNode('div', 'tr-loading', L('榜单暂不可用，稍后点「刷新」重试', 'Ranking unavailable, tap Refresh')));
+      trSetStatus((d && d.error) ? String(d.error) : L('未获取到榜单数据', 'No ranking data'), true);
+      return;
+    }
+    trRows = rows;
+    rows.forEach(x => {
+      const row = trNode('div', 'tr-item');
+      row.setAttribute('role', 'button');
+      row.tabIndex = 0;
+      row.title = x.city + ' · ' + L('日均 ', 'avg ') + fmtMm(x.day_avg) + ' mm/h · ' +
+        L('24h 累计 ', '24h sum ') + fmtMm(x.day_sum) + ' mm · ' + L('峰值 ', 'peak ') + fmtMm(x.day_peak) + ' mm/h';
+      row.appendChild(trNode('span', 'tr-rank', '0' + (x.rank || '?')));
+      const main = trNode('div', 'tr-main');
+      main.appendChild(trNode('div', 'tr-name', x.city));
+      main.appendChild(trNode('div', 'tr-sub',
+        (x.region || '') + ' · ' + (x.level || '') + ' · ' + L('累计 ', 'sum ') + fmtMm(x.day_sum) + ' mm'));
+      row.appendChild(main);
+      const val = trNode('div', 'tr-val');
+      val.appendChild(trNode('div', 'tr-mm', fmtMm(x.day_avg)));
+      val.appendChild(trNode('div', 'tr-unit', L('mm/h 日均', 'mm/h avg')));
+      row.appendChild(val);
+      row.appendChild(trNode('span', 'tr-arrow', '›'));
+      if (trSelected === x.city) row.classList.add('sel');
+      const pick = () => importTopCity(x.city, row);
+      row.addEventListener('click', pick);
+      row.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); }
+      });
+      list.appendChild(row);
+    });
+    const meta = $('trMeta');
+    if (meta) {
+      meta.textContent = L('口径 ', 'Ranked by ') + (d.rank_by || '-') + ' · ' +
+        L('样本 ', 'sample ') + (d.sample_size || 0) + L(' 城', ' cities') + ' · ' +
+        L('更新 ', 'updated ') + (d.updated_at || '-') +
+        (d.cached ? L(' · 缓存', ' · cached') : L(' · 实时回源', ' · fresh')) +
+        (d.stale ? L(' · 上游异常沿用上次', ' · stale upstream') : '') +
+        (d.throttled ? L(' · 60 秒内刚刷新过', ' · throttled') : '');
+    }
+    const note = $('trNote');
+    if (note) { note.textContent = d.note ? String(d.note) : ''; note.title = note.textContent; }
+    trSetStatus(L('点击任一城市，即可自动导入当地 25 个逐时降雨值',
+      'Tap a city to import its 25 hourly values'), false);
+  }
+  function importTopCity(name, row) {
+    const input = $('weatherCity');
+    if (!input) { trSetStatus(L('页面尚未就绪，请稍后再点', 'Not ready yet, try again'), true); return; }
+    trSelected = name;
+    const list = $('trList');
+    if (list) Array.prototype.forEach.call(list.children, n => n.classList.remove('sel'));
+    if (row) row.classList.add('sel');
+    input.value = name;
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    trSetStatus(L('正在导入「', 'Importing ') + name + L('」的 25 个逐时降雨值…', ' hourly values…'), false);
+    /* 以真实数据帧为准给反馈，不用固定延时假装完成 */
+    let tries = 0;
+    const timer = setInterval(() => {
+      tries++;
+      const f = runtime.lastFrame;
+      const fc = f && f.location ? String(f.location.name || '') : '';
+      const hit = fc && (fc.indexOf(name) >= 0 || name.indexOf(fc) >= 0);
+      if (hit) {
+        clearInterval(timer);
+        if (trSelected === name) {
+          trSetStatus(L('已导入 ', 'Imported ') + name + L(' · 雨幕与曲线已更新，每 30 分钟自动刷新',
+            ' · scene updated, refreshes every 30 min'), false);
+        }
+      } else if (tries >= 40) {
+        clearInterval(timer);
+        if (trSelected === name) {
+          trSetStatus(L('已发起导入 ', 'Requested ') + name + L('，若曲线未更新请点「立即拉取」',
+            ', tap Fetch now if the curve did not move'), true);
+        }
+      }
+    }, 300);
+  }
+  async function loadTopRain(force) {
+    const list = $('trList');
+    if (!list) return null;
+    const base = apiBase();
+    if (!base) {
+      list.textContent = '';
+      list.appendChild(trNode('div', 'tr-loading', L('未配置服务器，无法获取全球榜单', 'No server configured')));
+      trSetStatus('', false);
+      return null;
+    }
+    if (trInflight) return trInflight;
+    const btn = $('trRefresh');
+    if (btn) btn.disabled = true;
+    list.textContent = '';
+    list.appendChild(trNode('div', 'tr-loading', L('正在查询全球主要城市的当前雨势…', 'Querying global rainfall…')));
+    trInflight = fetch(base + '/api/top-rain' + (force ? '?refresh=1' : ''), { cache: 'no-store' })
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(d => { trLast = Date.now(); renderTopRain(d); return d; })
+      .catch(e => {
+        list.textContent = '';
+        list.appendChild(trNode('div', 'tr-loading', L('榜单加载失败，点「刷新」重试', 'Failed, tap Refresh')));
+        trSetStatus(L('无法连接降雨数据服务：', 'Cannot reach the rainfall service: ') + (e && e.message ? e.message : e), true);
+        return null;
+      })
+      .then(d => { trInflight = null; if (btn) btn.disabled = false; return d; });
+    return trInflight;
+  }
+  /* 与 server 的 :00 / :30 定时器同拍：整点/半点后延 6 秒再读，避免拿到旧缓存；
+     若当前已过边界 6 秒就直接等下一拍，不在整点刚过时白等半小时。 */
+  function scheduleTopRain() {
+    if (!apiBase()) return;
+    if (trTimer) clearTimeout(trTimer);
+    const now = Date.now();
+    const boundary = Math.floor(now / TR_HALF) * TR_HALF;
+    let target = boundary + 6000;
+    if (target <= now) target = boundary + TR_HALF + 6000;
+    trTimer = setTimeout(() => {
+      loadTopRain(false);
+      trTimer = setInterval(() => loadTopRain(false), TR_HALF);
+    }, Math.max(1000, target - now));
+  }
+  function mountTopRain() {
+    const box = $('trBox');
+    if (!box || box.dataset.bound === '1') return;
+    box.dataset.bound = '1';
+    const btn = $('trRefresh');
+    if (btn) btn.addEventListener('click', () => loadTopRain(true));
+    loadTopRain(false);
+    scheduleTopRain();
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) return;
+      if (Date.now() - trLast > 5 * 60 * 1000) loadTopRain(false);
+    });
+  }
+
   /* ------------------------------------------------------------------- UI */
   let mounted = false;
   const GROUPS = {
@@ -1065,6 +1291,12 @@
     }
     const loc = $('weatherLoc');
     if (loc) loc.textContent = f && f.location ? (f.location.name || cfg.city) : cfg.city;
+    /* 服务器按 IP 定位后把城市回填输入框；只在输入框为空时回填，
+       否则会盖掉用户刚点选的城市。也不写回 cfg，下次进入仍会重新定位。 */
+    if (cfg.provider === 'liverain' && f && f.location && f.location.name) {
+      const ci = $('weatherCity');
+      if (ci && document.activeElement !== ci && !ci.value.trim()) ci.value = f.location.name;
+    }
     const upd = $('weatherUpdated');
     if (upd) upd.textContent = f
       ? (fmtAgo(runtime.lastFetchAt) + ' · ' + f.values.length + ' pts')
@@ -1170,6 +1402,16 @@
         toast(L('已找到：', 'Found: ') + g.name);
       } catch (e) { toast(L('未找到该城市：', 'City not found: ') + e.message); }
     });
+    /* 城市名改变即拉取（全球榜单点击走的就是这条链路，等价于手动回车） */
+    $('weatherCity').addEventListener('change', () => {
+      const name = $('weatherCity').value.trim();
+      if (!name) return;
+      const patch = { city: name };
+      if (cfg.provider === 'demo') patch.provider = 'liverain';
+      API.configure(patch);
+      try { start(); } catch (e) { log('city change start failed: ' + e.message, 'error'); }
+      toast(L('正在拉取「', 'Fetching ') + name + L('」的数据…', '…'));
+    });
     $('weatherFile').addEventListener('change', e => {
       const file = e.target.files && e.target.files[0]; if (!file) return;
       const r = new FileReader();
@@ -1203,6 +1445,7 @@
     window.addEventListener('online', () => { if (runtime.running) refresh('online'); });
     on('frame', render); on('status', render);
 
+    mountTopRain();
     writeForm();
   }
 
@@ -1214,6 +1457,12 @@
     try { q = new URLSearchParams(location.search || ''); }
     catch (e) { log('URL params unavailable: ' + e.message, 'error'); return; }
     if (!q.toString()) return;
+    /* ?api=https://host —— 桌面/app 壳可以把后端地址直接带进来，
+       优先级高于「同源」，也高于已保存的服务器地址 */
+    if (q.has('api')) {
+      try { window.__RAINFORM_API_BASE__ = String(q.get('api')).replace(/\/+$/, ''); } catch (e) {}
+    }
+    if (q.has('weather')) urlExplicitProvider = true;
     const patch = {};
     const str = ['city', 'server', 'url', 'token', 'apiKey', 'apiHost', 'mqttUrl', 'topic', 'timezone'];
     str.forEach(k => { if (q.has(k)) patch[k] = q.get(k); });
@@ -1242,12 +1491,34 @@
 
   /* app.js boots synchronously right after this file; defer UI wiring by one
      tick so window.Rainform already exists when we start applying frames. */
+  /* 有后端时（网页 / PWA，以及配好地址的桌面与安卓）：
+     默认走服务器实时源，并清掉上次手动选的城市 —— 每次进入都按访客 IP 重新定位。
+     用户明确选过别的数据源（open-meteo / 自建 REST 等）时不动他的选择。 */
+  function applyServerDefaults() {
+    if (!apiBase()) return;
+    /* URL / 启动参数里明确写了 weather=xxx，就按用户说的来 */
+    if (urlExplicitProvider) return;
+    if (cfg.provider !== 'liverain' && cfg.provider !== 'demo') return;
+    let dirty = false;
+    if (cfg.provider !== 'liverain') { cfg.provider = 'liverain'; dirty = true; }
+    if (cfg.city) { cfg.city = ''; dirty = true; }
+    if (!cfg.autoStart) { cfg.autoStart = true; dirty = true; }
+    if (dirty) { saveCfg(); try { writeForm(); } catch (e) {} }
+  }
+
+  /* URL 是否明确指定过数据源（显式指定时不做「默认走服务器」的覆盖） */
+  let urlExplicitProvider = false;
   let bridgeStarted = false;
   function startBridge() {
     if (bridgeStarted) return;
     bridgeStarted = true;
     try { mount(); } catch (e) { log('mount failed: ' + e.message, 'error'); }
+    /* URL / 启动参数优先落地（?api= / ?weather= / ?city=），再补服务器默认值 */
     try { bootFromURL(); } catch (e) { log('URL boot failed: ' + e.message, 'error'); }
+    try { applyServerDefaults(); } catch (e) { log('server defaults failed: ' + e.message, 'error'); }
+    if (cfg.autoStart && !runtime.running) {
+      try { start(); } catch (e) { log('auto start failed: ' + e.message, 'error'); }
+    }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(startBridge, 0));
   else setTimeout(startBridge, 0);

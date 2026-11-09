@@ -232,7 +232,11 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
   border:1px solid transparent;display:flex;align-items:center;gap:6px;transition:.2s;white-space:nowrap}
 #miniBar button:hover{background:rgba(120,190,255,.16);border-color:rgba(160,215,255,.36)}
 #miniBar button:active{transform:scale(.95)}
-#miniBar #miniShow{border-color:rgba(143,211,255,.42);background:rgba(78,168,255,.14)}
+#miniBar #boostBtn{height:34px;padding:0 13px;border-radius:20px;font-size:11px;color:var(--text);
+  border:1px solid transparent;background:none;display:flex;align-items:center;gap:6px;
+  white-space:nowrap;letter-spacing:0}
+#miniBar #boostBtn.active{border-color:rgba(143,214,255,.55);background:rgba(78,168,255,.18);
+  color:var(--cyan)}
 .m-ico{font-size:15px;line-height:1;color:var(--cyan)}
 .m-ico.up{font-size:13px;margin-left:2px}
 .mini-sep{width:1px;height:18px;background:var(--line)}
@@ -515,3 +519,124 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
   .w-status{padding:7px 9px}
   .w-log{max-height:66px}
 }
+
+/* ============================================================================
+   雨幕背景色板（与服务器版一致：8 个选项，含「初始」还原与「白昼」亮色）
+   ========================================================================== */
+.bg-btn{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;
+  flex:0 0 auto;border:1px solid var(--line);color:var(--cyan);font-size:13px;
+  cursor:pointer;transition:border-color .2s}
+.bg-btn:hover,.bg-btn:focus-visible{border-color:rgba(143,214,255,.7)}
+.bg-palette{position:fixed;z-index:80;width:min(292px,calc(100vw - 28px));
+  padding:12px;border-radius:12px;border:1px solid var(--line);
+  background:rgba(9,20,34,.95);backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);box-shadow:0 16px 48px rgba(0,0,0,.55);display:none}
+.bg-palette.on{display:block}
+.bg-palette h4{margin:0 0 9px;font:500 9px var(--mono);letter-spacing:.16em;color:var(--muted)}
+.bg-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.bg-swatch{display:flex;flex-direction:column;align-items:center;gap:5px;padding:7px 3px;
+  border-radius:8px;border:1px solid var(--line-2);background:rgba(255,255,255,.02);cursor:pointer}
+.bg-swatch:hover{border-color:rgba(143,214,255,.45)}
+.bg-swatch.on{border-color:var(--cyan);background:rgba(78,168,255,.14)}
+.bg-dot{width:24px;height:24px;border-radius:50%;border:1px solid rgba(255,255,255,.22);
+  box-shadow:inset 0 0 9px rgba(0,0,0,.55)}
+.bg-name{font-size:9px;color:var(--muted);white-space:nowrap}
+.bg-tip{margin-top:9px;font-size:9px;line-height:1.5;color:var(--faint)}
+.wallpaper .bg-btn,.wallpaper .bg-palette{opacity:0;pointer-events:none}
+@media (max-width:700px){.bg-btn{width:28px;height:28px}.bg-grid{grid-template-columns:repeat(4,1fr)}}
+
+/* ---- 白昼（亮色）模式：深色文字 + 浅色面板，保证白底上仍可读 ---- */
+#app.bg-light{
+  --text:#16283a; --muted:#4b647a; --faint:#72889c;
+  --cyan:#1668a8; --cyan-dim:#3f7ba5;
+  --line:rgba(20,60,100,.18); --line-2:rgba(20,60,100,.10);
+  --panel:rgba(255,255,255,.80); --panel-2:rgba(255,255,255,.90);
+}
+#app.bg-light .glass{
+  background:rgba(255,255,255,.82);border-color:rgba(20,60,100,.16);
+  box-shadow:0 18px 60px rgba(20,50,80,.16),inset 0 1px 0 rgba(255,255,255,.9);
+}
+#app.bg-light .w-btn,#app.bg-light .panel-toggle,#app.bg-light .t-btn,
+#app.bg-light .seg-btns button,#app.bg-light .preset-btns button,
+#app.bg-light .curve-btns button,#app.bg-light #miniBar button{
+  background:rgba(232,241,250,.92);border-color:rgba(20,60,100,.16);color:var(--text);
+}
+#app.bg-light #miniBar{background:rgba(255,255,255,.88);border-color:rgba(20,60,100,.18)}
+#app.bg-light .tr-box{background:rgba(255,255,255,.88)}
+#app.bg-light .tr-item{background:rgba(226,238,249,.90);border-color:rgba(20,60,100,.12)}
+#app.bg-light .tr-item.sel{background:rgba(190,222,250,.95)}
+#app.bg-light .tr-name{color:var(--text)}
+#app.bg-light .tr-mm{color:var(--cyan)}
+#app.bg-light .bg-btn{color:var(--text)}
+/* 标题用了渐变镂空字、读数大字写死浅色，白底上会消失，需单独覆盖 */
+#app.bg-light .brand h1{
+  background:none;-webkit-background-clip:border-box;background-clip:border-box;
+  -webkit-text-fill-color:#16283a;color:#16283a;text-shadow:none;
+}
+#app.bg-light .readout .big{color:#16283a;text-shadow:none}
+#app.bg-light .eyebrow .tag{border-color:rgba(20,60,100,.25)}
+/* 这些按钮在源码里写死了深底/浅字，统一压成深字浅底 */
+#app.bg-light .panel-toggle,#app.bg-light .weather-open{
+  background:#e8f1fa !important;color:#16283a !important;
+  border-color:rgba(20,60,100,.22) !important;
+}
+#app.bg-light .pt-ico,#app.bg-light .pt-hide,#app.bg-light .pt-show,
+#app.bg-light .w-live-ico{color:#16283a !important}
+#app.bg-light .w-badge{
+  background:#e3eef8 !important;color:#16283a !important;
+  border-color:rgba(20,60,100,.2) !important;
+}
+#app.bg-light #miniBar button{color:#16283a !important}
+#app.bg-light #miniBar button.active,
+#app.bg-light #miniBar #boostBtn.active{color:#0f5f9e !important}
+#app.bg-light .m-ico{color:#1668a8 !important}
+/* 页脚署名原为深色半透明，白底上几乎看不见，单独压深 */
+#app.bg-light .footer{color:rgba(38,68,96,.72)}
+.bg-palette.light{background:rgba(255,255,255,.97);border-color:rgba(20,60,100,.2);
+  box-shadow:0 16px 48px rgba(20,50,80,.22)}
+.bg-palette.light h4,.bg-palette.light .bg-name,.bg-palette.light .bg-tip{color:#4b647a}
+.bg-palette.light .bg-swatch{background:rgba(20,60,100,.04);border-color:rgba(20,60,100,.12)}
+.bg-palette.light .bg-swatch.on{background:rgba(30,110,180,.16);border-color:#1668a8}
+
+/* ============================================================================
+   全球强降雨城市 TOP5（天气面板内）
+   ========================================================================== */
+.tr-box{margin:9px 0 4px;padding:10px 10px 8px;border-radius:10px;
+  border:1px solid var(--line);background:rgba(9,22,38,.62)}
+.tr-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.tr-title{font-size:10px;letter-spacing:.12em;color:var(--cyan);font-weight:600}
+.tr-count{font:9px var(--mono);color:var(--faint);flex:1}
+.tr-btn{flex:0 0 auto;height:24px;padding:0 9px;border-radius:6px;cursor:pointer;
+  border:1px solid var(--line);background:rgba(14,32,54,.85);
+  color:var(--muted);font-size:10px;font-family:var(--sans)}
+.tr-btn:active{transform:scale(.95)}
+.tr-btn[disabled]{opacity:.5;cursor:default}
+.tr-list{display:flex;flex-direction:column;gap:5px}
+.tr-item{display:flex;align-items:center;gap:9px;min-height:42px;padding:6px 9px;
+  border-radius:8px;border:1px solid var(--line-2);
+  background:rgba(14,30,50,.55);cursor:pointer;transition:background .16s,border-color .16s}
+.tr-item:hover{border-color:rgba(143,214,255,.4)}
+.tr-item:active{transform:scale(.99)}
+.tr-item.sel{border-color:rgba(143,214,255,.7);background:rgba(30,78,118,.55)}
+.tr-rank{flex:0 0 20px;text-align:center;font:11px var(--mono);color:var(--cyan-dim)}
+.tr-main{flex:1;min-width:0}
+.tr-name{font-size:12px;line-height:1.35;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tr-sub{font-size:9px;line-height:1.4;color:var(--faint);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tr-val{flex:0 0 auto;text-align:right;font-family:var(--mono)}
+.tr-mm{font-size:13px;color:var(--cyan);line-height:1.25}
+.tr-unit{font-size:8px;color:var(--faint)}
+.tr-arrow{flex:0 0 auto;font-size:11px;color:var(--faint)}
+.tr-meta{margin-top:8px;font:9px var(--mono);color:var(--faint);line-height:1.5}
+.tr-note{margin-top:3px;font-size:9px;line-height:1.5;color:var(--cyan-dim)}
+.tr-status{margin-top:5px;font-size:9.5px;line-height:1.5;color:var(--green);min-height:13px}
+.tr-status.warn{color:#ffcf8f}
+.tr-loading{padding:12px 4px;font-size:10px;color:var(--faint);text-align:center}
+@media (max-width:820px){
+  .tr-item{min-height:46px;padding:8px 10px}
+  .tr-name{font-size:13px}.tr-mm{font-size:14px}
+}
+/* 平台弱化：低画质（老 WebView / 弱 GPU）下不做毛玻璃，减少合成开销 */
+body.low-end .glass,body.low-end .bg-palette,body.low-end #miniBar{
+  backdrop-filter:none !important;-webkit-backdrop-filter:none !important}

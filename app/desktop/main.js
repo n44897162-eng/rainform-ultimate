@@ -38,6 +38,8 @@ function loadQuery() {
     q.auto = (flags['weather-auto'] === '0' || flags.weatherAuto === '0') ? '0' : '1';
   }
   if (flags['weather-server'] || flags.weatherServer) q.server = flags['weather-server'] || flags.weatherServer;
+  /* --api=https://host：直接指定后端（等价于页面上的 ?api=），优先于同源 */
+  if (flags.api) q.api = flags.api;
   if (flags.city) q.city = flags.city;
   if (flags.lat) q.lat = flags.lat;
   if (flags.lon) q.lon = flags.lon;

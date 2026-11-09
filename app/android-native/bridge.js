@@ -6,6 +6,9 @@
  */
 (function () {
   'use strict';
+
+  /* 平台标记：src/ 只读这个变量决定适配分支（低画质、原生网络、返回键） */
+  window.__RAINFORM_TARGET__ = 'android';
   var seq = 0;
   var pending = Object.create(null);
 

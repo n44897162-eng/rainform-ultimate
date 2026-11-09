@@ -10,10 +10,11 @@ const css = read('src/style.css');
 const three = read('vendor/three.min.js');
 const shaders = read('src/shaders.js');
 const audio = read('src/audio.js');
+const backdrop = read('src/backdrop.js');
 const weather = read('src/weather.js');
 const app = read('src/app.js');
 
-for (const [n, s] of [['three.min.js', three], ['shaders.js', shaders], ['audio.js', audio],
+for (const [n, s] of [['three.min.js', three], ['shaders.js', shaders], ['audio.js', audio], ['backdrop.js', backdrop],
                       ['weather.js', weather], ['app.js', app]]) {
   if (/<\/script/i.test(s)) throw new Error(n + ' contains a literal </script> tag, cannot inline safely');
 }
@@ -29,6 +30,7 @@ const bundle = [
   '<script>\n' + three + '\n</script>',
   '<script>\n' + shaders + '\n</script>',
   '<script>\n' + audio + '\n</script>',
+  '<script>\n' + backdrop + '\n</script>',
   '<script>\n' + weather + '\n</script>',
   '<script>\n' + app + '\n</script>'
 ].join('\n');

@@ -18,7 +18,7 @@
   var RAD = Math.PI / 180;
   var clamp = function (v, a, b) { return v < a ? a : (v > b ? b : v); };
   var lerp = function (a, b, t) { return a + (b - a) * t; };
-  var N = 25, MAX_MM = 20;
+  var N = 25, MAX_MM = 20, boostOn = false;
 
   var DEFAULT_DATA = [
     0.6, 0.4, 0.3, 0.5, 0.8, 1.4, 2.2, 3.1, 2.6, 3.8,
@@ -368,13 +368,52 @@
     setTimeout(function () { t.classList.remove('on'); }, 2200);
   }
 
+  /* --------------------------------------------------------------- boost
+     与 WebGL 版同一规则：Y 轴上限换成当天峰值 * 1.1（下限 0.5），
+     2D 渲染器所有绘制都除以 MAX_MM，改它即整体重标定。 */
+  function axisTop() {
+    if (!boostOn) return 20;
+    var peak = 0;
+    for (var i = 0; i < N; i++) if (data[i] > peak) peak = data[i];
+    return Math.max(0.5, Math.ceil(peak * 1.1 * 10) / 10);
+  }
+  function boostTitle(on) {
+    var zh = state.lang === 'zh';
+    if (!on) return zh ? '强化显示：把当天最大雨量设为 Y 轴上限，让小雨的起伏更清楚'
+      : 'Boost: fit the Y axis to the peak';
+    return zh ? ('强化显示已开启 · Y 轴 0\u2013' + MAX_MM.toFixed(1) + ' mm/h（点击关闭）')
+      : ('Boost on \u00b7 Y axis 0\u2013' + MAX_MM.toFixed(1) + ' mm/h');
+  }
+  /* 数据换了就要重新标定上限，否则强化显示会一直停在上一座城市的峰值 */
+  function recalcAxis() {
+    MAX_MM = axisTop();
+    var b = $('boostBtn');
+    if (b && boostOn) b.title = boostTitle(true);
+  }
+  function setBoost(on) {
+    boostOn = !!on;
+    MAX_MM = axisTop();
+    buildDrops(); drawCurve();
+    var b = $('boostBtn');
+    if (b) {
+      b.classList.toggle('active', boostOn);
+      b.setAttribute('aria-pressed', String(boostOn));
+      b.title = boostTitle(boostOn);
+    }
+    try { localStorage.setItem('rainform.boost', boostOn ? '1' : '0'); } catch (e) {}
+  }
+
   /* ------------------------------------------------------------- contract */
   var API = {
     state: state,
     impactStats: impactStats,
+    get boost() { return boostOn; },
+    get axisMax() { return MAX_MM; },
+    get backdrop() { return window.RainBackdrop ? window.RainBackdrop.current.key : 'origin'; },
     update: function (values) {
       if (!Array.isArray(values) || values.length !== N) return;
-      data = values.map(function (v) { return clamp(+v || 0, 0, MAX_MM); });
+      data = values.map(function (v) { return clamp(+v || 0, 0, 20); });
+      recalcAxis();
       buildDrops(); drawCurve();
     },
     rotate: function (deg) { state.tTheta += deg * RAD; },
@@ -390,6 +429,8 @@
       if (!silent) toast(state.lang === 'zh' ? (state.smooth ? '已拟合为平滑曲线' : '已恢复折线') : (state.smooth ? 'Smooth curve' : 'Polyline'));
     },
     setPanels: function (hidden) { state.panelsHidden = !!hidden; syncUI(); },
+    setBoost: setBoost,
+    setBackdrop: function (key) { return window.RainBackdrop ? window.RainBackdrop.apply(key) : key; },
     setTime: function (t) { state.t = clamp(+t || 0, 0, 24); syncUI(); },
     audioMix: function (mmh) {
       return window.RainAudio && window.RainAudio.mix ? window.RainAudio.mix(mmh) : { volume: clamp(mmh / 20, 0, 1) };
@@ -415,6 +456,7 @@
     on('curveBtn', function () { API.setChart(!state.chartOn); });
     on('miniChart', function () { API.setChart(!state.chartOn); });
     on('smoothBtn', function () { API.setSmooth(!state.smooth); });
+    on('boostBtn', function () { setBoost(!boostOn); });
     var sr = $('smoothRange');
     if (sr) sr.addEventListener('input', function () { API.setSmooth(state.smooth, (+sr.value || 0) / 100, true); syncUI(); });
     on('playBtn', function () { state.playing = !state.playing; syncUI(); });
@@ -514,6 +556,11 @@
     window.__RAINFORM_LEGACY_STATS__ = { frames: 0, drops: 0, ripples: 0, splashes: 0 };
     bindUI();
     resize(); buildDrops(); applyLang(); syncUI(); drawCurve();
+    if (window.RainBackdrop) {
+      window.RainBackdrop.init({ lang: function () { return state.lang; } });
+    }
+    try { if (localStorage.getItem('rainform.boost') !== '0') setBoost(true); }
+    catch (e) { setBoost(true); }
     if (window.RainWeather && window.RainWeather.on) {
       RainWeather.on('frame', function (f) { if (f && f.values) API.update(f.values); });
       try {
